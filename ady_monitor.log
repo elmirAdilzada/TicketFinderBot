@@ -2946,3 +2946,18 @@ NameError: name 'threading' is not defined. Did you forget to import 'threading'
 2026-06-30 20:02:34  INFO      monitor.poller: No date changes for Tbilisi → Baku
 2026-06-30 20:02:34  INFO      monitor.poller: Poll cycle complete. Next poll in 1 min (around 20:03:55).
 2026-06-30 20:02:40  INFO      __main__: Received signal 2 – shutting down.
+2026-06-30 20:08:24  INFO      monitor.poller: ADY Monitor starting…
+2026-06-30 20:08:24  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-06-30 20:08:24  INFO      browser.session: Starting BrowserManager...
+2026-06-30 20:08:24  INFO      browser.session: Launching Playwright Chromium (headless=False) to bypass Cloudflare...
+2026-06-30 20:08:24  INFO      browser.session: Navigating to https://ticket.ady.az to solve Cloudflare challenge...
+2026-06-30 20:08:26  INFO      browser.session: Cloudflare cleared successfully!
+2026-06-30 20:08:26  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-06-30 20:08:27  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-06-30 20:08:27  INFO      monitor.poller: Starting poll cycle…
+2026-06-30 20:08:29  INFO      monitor.poller: Polled Baku → Tbilisi → 4 available dates
+2026-06-30 20:08:29  INFO      monitor.poller: Date changes for Baku → Tbilisi: +1 / -1 (forced=False)
+2026-06-30 20:08:32  INFO      monitor.poller: Polled Tbilisi → Baku → 0 available dates
+2026-06-30 20:08:32  INFO      monitor.poller: Date changes for Tbilisi → Baku: +0 / -4 (forced=False)
+2026-06-30 20:08:32  INFO      monitor.poller: Poll cycle complete. Next poll in 2 min (around 20:10:11).
+2026-06-30 20:08:41  INFO      __main__: Received signal 2 – shutting down.

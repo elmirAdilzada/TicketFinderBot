@@ -3,9 +3,14 @@ ADY Monitor – Configuration
 Edit this file before running.
 """
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # ── Telegram ──────────────────────────────────────────────────────────────────
-TELEGRAM_BOT_TOKEN = "8953043235:AAEOhUod9o1ysQbTeYIj2jPn8tJ3atSv13k"   # e.g. "7123456789:AAF..."
-TELEGRAM_CHAT_ID   = "1292126884"     # e.g. "123456789"
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID   = os.getenv("TELEGRAM_CHAT_ID", "")
 
 # ── Routes to monitor ─────────────────────────────────────────────────────────
 # Station IDs discovered from HAR: Baku RWS = 232, Tbilisi = 170
