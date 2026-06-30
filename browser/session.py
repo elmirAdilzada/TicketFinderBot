@@ -163,7 +163,7 @@ class BrowserManager:
             # Keep JS unblocked — needed for grecaptcha and page logic
             # Keep 'script' unblocked for the same reason
             def _handle_route(route):
-                if route.request.resource_type in BLOCKED_TYPES:
+                if route.request.resource_type in BLOCKED_TYPES or "gstatic.com" in route.request.url:
                     route.abort()
                 else:
                     route.continue_()
