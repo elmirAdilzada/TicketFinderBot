@@ -141,72 +141,62 @@ class ADYApiClient:
         """
         Execute the fetch request natively inside the Playwright browser page.
         Routes through the thread-safe BrowserManager queue.
+        Waits for grecaptcha to be ready and always sends a valid token.
         """
         import json
 
         js_code = f'''
-        () => {{
-            return new Promise((resolve) => {{
-                setTimeout(() => resolve(JSON.stringify({{status: 504, error: "JS Promise Timeout"}})), 12000);
-
-                try {{
-                    const body_json = {json.dumps(payload)};
+        async () => {{
+            // Wait up to 10s for grecaptcha to become available
+            const waitForRecaptcha = () => new Promise((resolve, reject) => {{
+                let attempts = 0;
+                const check = () => {{
                     if (typeof grecaptcha !== 'undefined' && grecaptcha.ready) {{
-                        grecaptcha.ready(() => {{
-                            Promise.race([
-                                grecaptcha.execute('6LecJSYtAAAAAMSGKGKhA72oiCfAWr8EoAUzEMgj', {{action: 'submit'}}),
-                                new Promise((_, reject) => setTimeout(() => reject(new Error("Recaptcha Timeout")), 3000))
-                            ])
-                            .then(function(token) {{
-                                let p = body_json;
-                                p.g_token = token;
-                                fetch('{url}', {{
-                                    method: 'POST',
-                                    headers: {{
-                                        'Content-Type': 'application/json',
-                                        'X-Requested-With': 'XMLHttpRequest'
-                                    }},
-                                    body: JSON.stringify(p)
-                                }}).then(r => {{
-                                    r.json().then(j => resolve(JSON.stringify({{status: r.status, data: j}}))).catch(e => resolve(JSON.stringify({{status: r.status, error: e.toString()}})));
-                                }}).catch(e => resolve(JSON.stringify({{status: 0, error: e.toString()}})));
-                            }})
-                            .catch(function(err) {{
-                                let p = body_json;
-                                fetch('{url}', {{
-                                    method: 'POST',
-                                    headers: {{
-                                        'Content-Type': 'application/json',
-                                        'X-Requested-With': 'XMLHttpRequest'
-                                    }},
-                                    body: JSON.stringify(p)
-                                }}).then(r => {{
-                                    r.json().then(j => resolve(JSON.stringify({{status: r.status, data: j}}))).catch(e => resolve(JSON.stringify({{status: r.status, error: e.toString()}})));
-                                }}).catch(e => resolve(JSON.stringify({{status: 0, error: e.toString()}})));
-                            }});
-                        }});
+                        resolve();
+                    }} else if (attempts++ > 50) {{
+                        reject(new Error("grecaptcha not available after 10s"));
                     }} else {{
-                        let p = body_json;
-                        fetch('{url}', {{
-                            method: 'POST',
-                            headers: {{
-                                'Content-Type': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }},
-                            body: JSON.stringify(p)
-                        }}).then(r => {{
-                            r.json().then(j => resolve(JSON.stringify({{status: r.status, data: j}}))).catch(e => resolve(JSON.stringify({{status: r.status, error: e.toString()}})));
-                        }}).catch(e => resolve(JSON.stringify({{status: 0, error: e.toString()}})));
+                        setTimeout(check, 200);
                     }}
-                }} catch (e) {{
-                    resolve(JSON.stringify({{status: 500, error: e.toString()}}));
-                }}
+                }};
+                check();
             }});
+
+            try {{
+                await waitForRecaptcha();
+
+                const token = await new Promise((resolve, reject) => {{
+                    grecaptcha.ready(() => {{
+                        grecaptcha.execute('6LecJSYtAAAAAMSGKGKhA72oiCfAWr8EoAUzEMgj', {{action: 'submit'}})
+                            .then(resolve)
+                            .catch(reject);
+                    }});
+                    setTimeout(() => reject(new Error("grecaptcha.execute timeout")), 10000);
+                }});
+
+                const p = {json.dumps(payload)};
+                p.g_token = token;
+
+                const r = await fetch('{url}', {{
+                    method: 'POST',
+                    headers: {{
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }},
+                    body: JSON.stringify(p)
+                }});
+
+                const j = await r.json();
+                return JSON.stringify({{status: r.status, data: j}});
+
+            }} catch(e) {{
+                return JSON.stringify({{status: 500, error: e.toString()}});
+            }}
         }}
         '''
 
         try:
-            val = self._browser.evaluate(js_code, timeout=20.0)
+            val = self._browser.evaluate(js_code, timeout=30.0)
             if val:
                 parsed = json.loads(val)
                 if parsed.get("status") in (403, 503):
