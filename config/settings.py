@@ -4,7 +4,7 @@ Edit this file before running.
 """
 
 # ── Telegram ──────────────────────────────────────────────────────────────────
-TELEGRAM_BOT_TOKEN = "8953043235:AAFVWGKKZTA6oaDkqhk4JOjDgonq7Ev7xnw"   # e.g. "7123456789:AAF..."
+TELEGRAM_BOT_TOKEN = "8953043235:AAEOhUod9o1ysQbTeYIj2jPn8tJ3atSv13k"   # e.g. "7123456789:AAF..."
 TELEGRAM_CHAT_ID   = "1292126884"     # e.g. "123456789"
 
 # ── Routes to monitor ─────────────────────────────────────────────────────────

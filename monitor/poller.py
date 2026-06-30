@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 import random
 import time
+import threading
 from typing import Optional
 
 from config.settings import ROUTES
@@ -34,7 +35,6 @@ from telegram.bot import (
     notify_error,
     TelegramListener,
 )
-from browser.session import get_cf_cookies, KeepaliveScheduler
 
 log = logging.getLogger(__name__)
 
@@ -73,27 +73,23 @@ def _poll_route_dates(client: ADYApiClient, route: dict) -> Optional[DateSnapsho
 
 # ── Cloudflare recovery ───────────────────────────────────────────────────────
 
-def _handle_cloudflare_challenge(scheduler: KeepaliveScheduler) -> dict[str, str]:
+def _handle_cloudflare_challenge(browser) -> None:
     """
-    Pause polling, notify Telegram, wait for user to solve CF challenge.
-    Returns fresh cookies once resolved.
+    Pause polling, notify Telegram, wait for Playwright to solve CF challenge.
     """
+    from telegram.bot import notify_cloudflare_challenge, notify_cloudflare_resolved
     log.warning("Cloudflare challenge detected – pausing poll loop")
     notify_cloudflare_challenge()
-    scheduler.stop()
 
     # Wait for fresh cookies with a long timeout
-    log.info("Waiting for user to solve Cloudflare challenge in browser…")
-    while True:
-        try:
-            cookies = get_cf_cookies(timeout=300)  # 5 min window each attempt
-            log.info("Cloudflare resolved – resuming")
-            notify_cloudflare_resolved()
-            scheduler.start()
-            return cookies
-        except RuntimeError:
-            log.info("Still waiting for CF clearance…")
-            time.sleep(30)
+    log.info("Waiting for Playwright to solve Cloudflare challenge in browser…")
+    try:
+        browser.page.reload()
+        browser._wait_for_cloudflare(timeout=300)
+        log.info("Cloudflare resolved – resuming")
+        notify_cloudflare_resolved()
+    except RuntimeError:
+        log.error("Failed to solve Cloudflare challenge automatically.")
 
 
 # ── Main loop ─────────────────────────────────────────────────────────────────
@@ -104,38 +100,32 @@ def run_monitor() -> None:
     Runs indefinitely until interrupted.
     """
     log.info("ADY Monitor starting…")
-    notify_startup(ROUTES)
-
-    # Load persisted state
+    
+    # ── Initialization ─────────────────────────────────────────────────────────
     state = load_state()
     log.info("Loaded state with %d saved routes", len(state))
 
-    # Get initial CF cookies
-    log.info("Extracting Cloudflare cookies from browser…")
+    from browser.session import BrowserManager
+    
+    browser = BrowserManager()
     try:
-        cf_cookies = get_cf_cookies(timeout=120)
-    except RuntimeError as exc:
-        log.error("Cannot start without CF cookies: %s", exc)
-        notify_error(str(exc))
+        browser.start()
+    except Exception as exc:
+        log.critical("Failed to start browser: %s", exc)
         return
 
-    # Start keepalive scheduler
-    scheduler = KeepaliveScheduler()
-    scheduler.start()
+    # Pass the playwright page directly to the API client
+    client = ADYApiClient(browser.page)
 
-    # Build API client
-    client = ADYApiClient(cf_cookies)
-
-    import threading
     force_poll_event = threading.Event()
-
-    # Start Telegram listener for interactive date queries
     listener = TelegramListener(
         api_client=client,
         routes=ROUTES,
-        force_poll_event=force_poll_event
+        force_poll_event=force_poll_event,
     )
     listener.start()
+
+    notify_startup(ROUTES)
 
     poll_min = get_setting("POLL_MIN_SECONDS", 60)
     poll_max = get_setting("POLL_MAX_SECONDS", 120)
@@ -152,8 +142,7 @@ def run_monitor() -> None:
             try:
                 new_snapshot = _poll_route_dates(client, route)
             except CloudflareChallenge:
-                cf_cookies = _handle_cloudflare_challenge(scheduler)
-                client.refresh_cookies(cf_cookies)
+                _handle_cloudflare_challenge(browser)
                 # Retry this route once
                 try:
                     new_snapshot = _poll_route_dates(client, route)

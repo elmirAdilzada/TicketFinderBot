@@ -2865,3 +2865,84 @@
 2026-06-27 19:02:20  INFO      monitor.poller: No date changes for Tbilisi → Baku
 2026-06-27 19:02:20  INFO      monitor.poller: Poll cycle complete. Next poll in 1 min (around 19:03:07).
 2026-06-27 19:02:22  INFO      config.dynamic_settings: Dynamic setting POLL_MAX_SECONDS updated to 120
+2026-06-30 19:59:45  INFO      monitor.poller: ADY Monitor starting…
+2026-06-30 19:59:45  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-06-30 19:59:45  INFO      browser.session: Starting BrowserManager...
+2026-06-30 19:59:45  INFO      browser.session: Launching Playwright Chromium (headless=False) to bypass Cloudflare...
+2026-06-30 19:59:46  INFO      browser.session: Navigating to https://ticket.ady.az to solve Cloudflare challenge...
+2026-06-30 19:59:48  INFO      browser.session: Waiting for Cloudflare... (Title: ADY | Qatarların hərəkət cədvəli və qrafiki)
+2026-06-30 19:59:51  INFO      browser.session: Waiting for Cloudflare... (Title: ADY | Qatarların hərəkət cədvəli və qrafiki)
+2026-06-30 19:59:54  INFO      browser.session: Waiting for Cloudflare... (Title: ADY | Qatarların hərəkət cədvəli və qrafiki)
+2026-06-30 19:59:57  INFO      browser.session: Waiting for Cloudflare... (Title: ADY | Qatarların hərəkət cədvəli və qrafiki)
+2026-06-30 20:00:00  INFO      browser.session: Waiting for Cloudflare... (Title: ADY | Qatarların hərəkət cədvəli və qrafiki)
+2026-06-30 20:00:03  INFO      browser.session: Waiting for Cloudflare... (Title: ADY | Qatarların hərəkət cədvəli və qrafiki)
+2026-06-30 20:00:06  INFO      browser.session: Waiting for Cloudflare... (Title: ADY | Qatarların hərəkət cədvəli və qrafiki)
+2026-06-30 20:00:09  INFO      browser.session: Waiting for Cloudflare... (Title: ADY | Qatarların hərəkət cədvəli və qrafiki)
+2026-06-30 20:00:12  INFO      browser.session: Waiting for Cloudflare... (Title: ADY | Qatarların hərəkət cədvəli və qrafiki)
+2026-06-30 20:00:15  INFO      browser.session: Waiting for Cloudflare... (Title: ADY | Qatarların hərəkət cədvəli və qrafiki)
+2026-06-30 20:00:18  INFO      browser.session: Waiting for Cloudflare... (Title: ADY | Qatarların hərəkət cədvəli və qrafiki)
+2026-06-30 20:00:21  INFO      monitor.poller: ADY Monitor starting…
+2026-06-30 20:00:21  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-06-30 20:00:21  INFO      browser.session: Starting BrowserManager...
+2026-06-30 20:00:21  INFO      browser.session: Launching Playwright Chromium (headless=False) to bypass Cloudflare...
+2026-06-30 20:00:21  INFO      browser.session: Waiting for Cloudflare... (Title: ADY | Qatarların hərəkət cədvəli və qrafiki)
+2026-06-30 20:00:21  CRITICAL  monitor.poller: Failed to start browser: BrowserType.launch_persistent_context: Opening in existing browser session. This usually means that the profile is already in use by another instance of Chromium.
+Call log:
+  - <launching> C:\Users\adilz\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --no-sandbox --disable-blink-features=AutomationControlled --no-sandbox --disable-dev-shm-usage --user-data-dir=C:\Users\adilz\Desktop\Python\browser\..\playwright_profile --remote-debugging-pipe about:blank
+  - <launched> pid=12512
+  - [pid=12512][out] Opening in existing browser session.
+  - [pid=12512] <gracefully close start>
+  - [pid=12512] <kill>
+  - [pid=12512] <will force kill>
+  - [pid=12512] taskkill stderr: ERROR: The process "12512" not found.
+  - [pid=12512] <process did exit: exitCode=0, signal=null>
+  - [pid=12512] starting temporary directories cleanup
+  - [pid=12512] finished temporary directories cleanup
+  - [pid=12512] <gracefully close end>
+
+2026-06-30 20:00:24  INFO      browser.session: Waiting for Cloudflare... (Title: ADY | Qatarların hərəkət cədvəli və qrafiki)
+2026-06-30 20:00:27  CRITICAL  monitor.poller: Failed to start browser: Page.title: Target page, context or browser has been closed
+2026-06-30 20:00:40  INFO      monitor.poller: ADY Monitor starting…
+2026-06-30 20:00:40  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-06-30 20:00:40  INFO      browser.session: Starting BrowserManager...
+2026-06-30 20:00:40  INFO      browser.session: Launching Playwright Chromium (headless=False) to bypass Cloudflare...
+2026-06-30 20:00:41  INFO      browser.session: Navigating to https://ticket.ady.az to solve Cloudflare challenge...
+2026-06-30 20:00:42  INFO      browser.session: Cloudflare cleared successfully!
+2026-06-30 20:00:42  CRITICAL  __main__: Fatal error: name 'threading' is not defined
+Traceback (most recent call last):
+  File "C:\Users\adilz\Desktop\Python\main.py", line 44, in <module>
+    run_monitor()
+    ~~~~~~~~~~~^^
+  File "C:\Users\adilz\Desktop\Python\monitor\poller.py", line 119, in run_monitor
+    force_poll_event = threading.Event()
+                       ^^^^^^^^^
+NameError: name 'threading' is not defined. Did you forget to import 'threading'?
+2026-06-30 20:01:06  INFO      monitor.poller: ADY Monitor starting…
+2026-06-30 20:01:06  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-06-30 20:01:06  INFO      browser.session: Starting BrowserManager...
+2026-06-30 20:01:06  INFO      browser.session: Launching Playwright Chromium (headless=False) to bypass Cloudflare...
+2026-06-30 20:01:06  INFO      browser.session: Navigating to https://ticket.ady.az to solve Cloudflare challenge...
+2026-06-30 20:01:08  INFO      browser.session: Cloudflare cleared successfully!
+2026-06-30 20:01:08  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-06-30 20:01:09  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-06-30 20:01:09  INFO      monitor.poller: Starting poll cycle…
+2026-06-30 20:01:10  INFO      monitor.poller: Polled Baku → Tbilisi → 4 available dates
+2026-06-30 20:01:10  INFO      monitor.poller: Date changes for Baku → Tbilisi: +4 / -3 (forced=False)
+2026-06-30 20:01:12  INFO      monitor.poller: Polled Tbilisi → Baku → 4 available dates
+2026-06-30 20:01:12  INFO      monitor.poller: Date changes for Tbilisi → Baku: +4 / -3 (forced=False)
+2026-06-30 20:01:13  INFO      monitor.poller: Poll cycle complete. Next poll in 2 min (around 20:02:56).
+2026-06-30 20:02:29  INFO      monitor.poller: ADY Monitor starting…
+2026-06-30 20:02:29  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-06-30 20:02:29  INFO      browser.session: Starting BrowserManager...
+2026-06-30 20:02:29  INFO      browser.session: Launching Playwright Chromium (headless=False) to bypass Cloudflare...
+2026-06-30 20:02:30  INFO      browser.session: Navigating to https://ticket.ady.az to solve Cloudflare challenge...
+2026-06-30 20:02:31  INFO      browser.session: Cloudflare cleared successfully!
+2026-06-30 20:02:32  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-06-30 20:02:32  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-06-30 20:02:32  INFO      monitor.poller: Starting poll cycle…
+2026-06-30 20:02:34  INFO      monitor.poller: Polled Baku → Tbilisi → 4 available dates
+2026-06-30 20:02:34  INFO      monitor.poller: No date changes for Baku → Tbilisi
+2026-06-30 20:02:34  INFO      monitor.poller: Polled Tbilisi → Baku → 4 available dates
+2026-06-30 20:02:34  INFO      monitor.poller: No date changes for Tbilisi → Baku
+2026-06-30 20:02:34  INFO      monitor.poller: Poll cycle complete. Next poll in 1 min (around 20:03:55).
+2026-06-30 20:02:40  INFO      __main__: Received signal 2 – shutting down.

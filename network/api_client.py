@@ -97,15 +97,11 @@ class ADYApiClient:
 
     CLOUDFLARE_TITLES = {"Just a moment", "Attention Required", "Access denied"}
 
-    def __init__(self, cf_cookies: dict[str, str]):
-        self._session = _build_session(cf_cookies)
-        self._cf_cookies = cf_cookies
+    def __init__(self, page):
+        self._page = page
 
     def refresh_cookies(self, cf_cookies: dict[str, str]) -> None:
-        """Re-apply cookies after browser re-validates Cloudflare."""
-        self._cf_cookies = cf_cookies
-        for name, value in cf_cookies.items():
-            self._session.cookies.set(name, value, domain="ticket.ady.az")
+        pass # Playwright manages cookies natively, so we don't need this method anymore
 
     # ── private helpers ────────────────────────────────────────────────────────
 
@@ -140,146 +136,91 @@ class ADYApiClient:
 
         return data
 
-    def _cdp_execute_fetch(self, url: str, payload: dict) -> Optional[dict]:
+    def _playwright_execute_fetch(self, url: str, payload: dict) -> Optional[dict]:
         """
-        Execute the fetch request directly inside the live browser via CDP.
-        This bypasses both Cloudflare fingerprinting and correctly generates
-        a real Google ReCaptcha v3 token which the ADY API now strictly enforces.
+        Execute the fetch request natively inside the Playwright browser page.
         """
-        try:
-            import websocket
-            import threading
-            import json
-        except ImportError:
-            log.warning("websocket-client not installed; cannot execute CDP fetch")
-            return None
-
-        # Find the websocket debug URL for our target
-        try:
-            resp = requests.get("http://localhost:9222/json/list", timeout=5)
-            targets = resp.json()
-        except Exception as exc:
-            log.warning("Failed to reach CDP json list: %s", exc)
-            return None
-
-        ws_url = None
-        for t in targets:
-            if "ticket.ady.az" in t.get("url", ""):
-                ws_url = t.get("webSocketDebuggerUrl")
-                break
+        import json
         
-        # Fallback to any page if we can't find ticket.ady.az directly
-        if not ws_url:
-            for t in targets:
-                if t.get("type") == "page":
-                    ws_url = t.get("webSocketDebuggerUrl")
-                    break
-
-        if not ws_url:
-            log.warning("No suitable CDP target found for fetch")
+        if not self._page or self._page.is_closed():
+            log.warning("Playwright page is closed or invalid")
             return None
-
-        done = threading.Event()
-        result_data = None
-
-        def on_message(ws, message):
-            nonlocal result_data
-            try:
-                data = json.loads(message)
-                if "result" in data:
-                    result_data = data
-                    done.set()
-            except Exception:
-                pass
-
-        def on_open(ws):
-            # JS script to get ReCaptcha token and execute the fetch
-            body_json = json.dumps(payload)
-            js = f'''
-            (() => {{
-                return new Promise((resolve) => {{
-                    // Fallback timeout to ensure we ALWAYS resolve
-                    setTimeout(() => resolve(JSON.stringify({{status: 504, error: "JS Promise Timeout"}})), 12000);
-                    
-                    try {{
-                        if (typeof grecaptcha !== 'undefined' && grecaptcha.ready) {{
-                            grecaptcha.ready(() => {{
-                                Promise.race([
-                                    grecaptcha.execute('6LecJSYtAAAAAMSGKGKhA72oiCfAWr8EoAUzEMgj', {{action: 'submit'}}),
-                                    new Promise((_, reject) => setTimeout(() => reject(new Error("Recaptcha Timeout")), 3000))
-                                ])
-                                .then(function(token) {{
-                                    let payload = {body_json};
-                                    payload.g_token = token;
-                                    fetch('{url}', {{
-                                        method: 'POST',
-                                        headers: {{
-                                            'Content-Type': 'application/json',
-                                            'X-Requested-With': 'XMLHttpRequest'
-                                        }},
-                                        body: JSON.stringify(payload)
-                                    }}).then(r => {{
-                                        r.json().then(j => resolve(JSON.stringify({{status: r.status, data: j}}))).catch(e => resolve(JSON.stringify({{status: r.status, error: e.toString()}})));
-                                    }}).catch(e => resolve(JSON.stringify({{status: 0, error: e.toString()}})));
-                                }})
-                                .catch(function(err) {{
-                                    // If recaptcha fails or times out, try without it
-                                    let payload = {body_json};
-                                    fetch('{url}', {{
-                                        method: 'POST',
-                                        headers: {{
-                                            'Content-Type': 'application/json',
-                                            'X-Requested-With': 'XMLHttpRequest'
-                                        }},
-                                        body: JSON.stringify(payload)
-                                    }}).then(r => {{
-                                        r.json().then(j => resolve(JSON.stringify({{status: r.status, data: j}}))).catch(e => resolve(JSON.stringify({{status: r.status, error: e.toString()}})));
-                                    }}).catch(e => resolve(JSON.stringify({{status: 0, error: e.toString()}})));
-                                }});
+            
+        js_code = f'''
+        () => {{
+            return new Promise((resolve) => {{
+                setTimeout(() => resolve(JSON.stringify({{status: 504, error: "JS Promise Timeout"}})), 12000);
+                
+                try {{
+                    const body_json = {json.dumps(payload)};
+                    if (typeof grecaptcha !== 'undefined' && grecaptcha.ready) {{
+                        grecaptcha.ready(() => {{
+                            Promise.race([
+                                grecaptcha.execute('6LecJSYtAAAAAMSGKGKhA72oiCfAWr8EoAUzEMgj', {{action: 'submit'}}),
+                                new Promise((_, reject) => setTimeout(() => reject(new Error("Recaptcha Timeout")), 3000))
+                            ])
+                            .then(function(token) {{
+                                let p = body_json;
+                                p.g_token = token;
+                                fetch('{url}', {{
+                                    method: 'POST',
+                                    headers: {{
+                                        'Content-Type': 'application/json',
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    }},
+                                    body: JSON.stringify(p)
+                                }}).then(r => {{
+                                    r.json().then(j => resolve(JSON.stringify({{status: r.status, data: j}}))).catch(e => resolve(JSON.stringify({{status: r.status, error: e.toString()}})));
+                                }}).catch(e => resolve(JSON.stringify({{status: 0, error: e.toString()}})));
+                            }})
+                            .catch(function(err) {{
+                                let p = body_json;
+                                fetch('{url}', {{
+                                    method: 'POST',
+                                    headers: {{
+                                        'Content-Type': 'application/json',
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    }},
+                                    body: JSON.stringify(p)
+                                }}).then(r => {{
+                                    r.json().then(j => resolve(JSON.stringify({{status: r.status, data: j}}))).catch(e => resolve(JSON.stringify({{status: r.status, error: e.toString()}})));
+                                }}).catch(e => resolve(JSON.stringify({{status: 0, error: e.toString()}})));
                             }});
-                        }} else {{
-                            // Fallback if grecaptcha is missing
-                            let payload = {body_json};
-                            fetch('{url}', {{
-                                method: 'POST',
-                                headers: {{
-                                    'Content-Type': 'application/json',
-                                    'X-Requested-With': 'XMLHttpRequest'
-                                }},
-                                body: JSON.stringify(payload)
-                            }}).then(r => {{
-                                r.json().then(j => resolve(JSON.stringify({{status: r.status, data: j}}))).catch(e => resolve(JSON.stringify({{status: r.status, error: e.toString()}})));
-                            }}).catch(e => resolve(JSON.stringify({{status: 0, error: e.toString()}})));
-                        }}
-                    }} catch (e) {{
-                        resolve(JSON.stringify({{status: 500, error: e.toString()}}));
+                        }});
+                    }} else {{
+                        let p = body_json;
+                        fetch('{url}', {{
+                            method: 'POST',
+                            headers: {{
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }},
+                            body: JSON.stringify(p)
+                        }}).then(r => {{
+                            r.json().then(j => resolve(JSON.stringify({{status: r.status, data: j}}))).catch(e => resolve(JSON.stringify({{status: r.status, error: e.toString()}})));
+                        }}).catch(e => resolve(JSON.stringify({{status: 0, error: e.toString()}})));
                     }}
-                }});
-            }})()
-            '''
-            ws.send(json.dumps({"id": 1, "method": "Runtime.evaluate", "params": {"expression": js, "awaitPromise": True}}))
-
+                }} catch (e) {{
+                    resolve(JSON.stringify({{status: 500, error: e.toString()}}));
+                }}
+            }});
+        }}
+        '''
+        
         try:
-            ws_client = websocket.WebSocketApp(ws_url, on_message=on_message, on_open=on_open)
-            t = threading.Thread(target=ws_client.run_forever, daemon=True)
-            t.start()
-            done.wait(timeout=15)
-            ws_client.close()
-
-            if result_data and "result" in result_data and "result" in result_data["result"]:
-                val = result_data["result"]["result"].get("value")
-                if val:
-                    parsed = json.loads(val)
-                    if parsed.get("status") in (403, 503):
-                        raise CloudflareChallenge(f"Cloudflare challenge detected (HTTP {parsed.get('status')})")
-                    if parsed.get("status") == 200 and "data" in parsed:
-                        return parsed["data"]
-                    log.warning("CDP fetch returned non-200 or missing data: %s", parsed)
+            val = self._page.evaluate(js_code)
+            if val:
+                parsed = json.loads(val)
+                if parsed.get("status") in (403, 503):
+                    raise CloudflareChallenge(f"Cloudflare challenge detected (HTTP {parsed.get('status')})")
+                if parsed.get("status") == 200 and "data" in parsed:
+                    return parsed["data"]
+                log.warning("Playwright fetch returned non-200 or missing data: %s", parsed)
             return None
         except CloudflareChallenge:
             raise
         except Exception as exc:
-            log.warning("CDP fetch error: %s", exc)
+            log.warning("Playwright fetch error: %s", exc)
             return None
 
     def get_trip_dates(
@@ -295,7 +236,7 @@ class ADYApiClient:
             "is_exclusive": 0,
             "g_token": "",
         }
-        raw = self._cdp_execute_fetch(ENDPOINTS["get_trip_dates"], payload)
+        raw = self._playwright_execute_fetch(ENDPOINTS["get_trip_dates"], payload)
         if raw is None:
             raise RuntimeError("get_trip_dates CDP fetch failed or timed out")
         if raw.get("error"):
@@ -337,7 +278,7 @@ class ADYApiClient:
             "is_exclusive": 0,
             "g_token": "",
         }
-        raw = self._cdp_execute_fetch(ENDPOINTS["get_trip"], payload)
+        raw = self._playwright_execute_fetch(ENDPOINTS["get_trip"], payload)
         if raw is None:
             raise RuntimeError("get_trip CDP fetch failed or timed out")
         if raw.get("error") or not isinstance(raw.get("data"), list):
@@ -372,7 +313,7 @@ class ADYApiClient:
             "is_exclusive": 0,
             "g_token": "",
         }
-        raw = self._cdp_execute_fetch(ENDPOINTS["get_traintrip"], payload)
+        raw = self._playwright_execute_fetch(ENDPOINTS["get_traintrip"], payload)
 
         if raw is None:
             raise RuntimeError("get_traintrip CDP fetch failed or timed out")

@@ -1,272 +1,163 @@
 """
-browser/session.py – Extract Cloudflare cookies from the live browser window
-and schedule periodic keepalive actions.
+browser/session.py – Playwright Browser Management
 
-Strategy:
-  1. Open (or focus) the browser on ticket.ady.az.
-  2. Wait for Cloudflare to clear.
-  3. Extract cf_clearance and __ddg1_ cookies from the browser's cookie store
-     via the DevTools Protocol (CDP) over localhost:9222 (Chrome launched with
-     --remote-debugging-port=9222) – no DOM interaction needed.
-  4. Schedule keepalive actions on a background thread.
-
-If CDP is unavailable we fall back to reading cookies from the Chrome
-SQLite profile database (offline extraction).
-
-IMPORTANT: The browser must be launched manually by the user with:
-  chrome.exe --remote-debugging-port=9222
-This is a standard developer feature, not automation.
+Provides a BrowserManager class that launches Chromium (headful but hidden on Linux via Xvfb)
+to bypass Cloudflare naturally and execute API fetches natively in the page context.
 """
 from __future__ import annotations
 
-import json
 import logging
 import os
-import random
-import sqlite3
-import tempfile
+import sys
 import threading
 import time
-from pathlib import Path
 from typing import Optional
 
-import requests
-
 from config.settings import KEEPALIVE_MIN_SECONDS, KEEPALIVE_MAX_SECONDS
-from browser.keepalive import perform_keepalive_action, focus_browser_window
 
 log = logging.getLogger(__name__)
 
-CDP_URL = "http://localhost:9222"
 TARGET_DOMAIN = "ticket.ady.az"
 
-# Cookies we must have for Cloudflare to accept our requests
-CF_COOKIE_NAMES = {"cf_clearance", "__ddg1_", "__ddg2_", "__cfwaitingroom"}
-
-# ── CDP-based cookie extraction ───────────────────────────────────────────────
-
-def _cdp_get_cookies() -> Optional[dict[str, str]]:
-    """
-    Use Chrome DevTools Protocol to extract cookies for TARGET_DOMAIN.
-    Returns dict of cookie name → value, or None if CDP is unreachable.
-    """
-    try:
-        # Get list of open targets
-        resp = requests.get(f"{CDP_URL}/json/list", timeout=5)
-        targets = resp.json()
-    except Exception as exc:
-        log.debug("CDP unreachable: %s", exc)
-        return None
-
-    # Find a target that has our site loaded
-    ws_url = None
-    for t in targets:
-        url = t.get("url", "")
-        if TARGET_DOMAIN in url:
-            ws_url = t.get("webSocketDebuggerUrl")
-            break
-
-    if ws_url is None and targets:
-        # Fall back to first available page target
-        for t in targets:
-            if t.get("type") == "page":
-                ws_url = t.get("webSocketDebuggerUrl")
-                break
-
-    if ws_url is None:
-        log.debug("No suitable CDP target found")
-        return None
-
-    # Use websocket to send Network.getCookies
-    try:
-        import websocket  # websocket-client
-
-        cookies: dict[str, str] = {}
-        done = threading.Event()
-
-        def on_message(ws, message):
-            try:
-                data = json.loads(message)
-                result = data.get("result", {})
-                for c in result.get("cookies", []):
-                    if TARGET_DOMAIN in c.get("domain", ""):
-                        cookies[c["name"]] = c["value"]
-            except Exception:
-                pass
-            finally:
-                done.set()
-
-        def on_open(ws):
-            ws.send(json.dumps({"id": 1, "method": "Network.getCookies",
-                                 "params": {"urls": [f"https://{TARGET_DOMAIN}"]}}))
-
-        ws_client = websocket.WebSocketApp(ws_url, on_message=on_message, on_open=on_open)
-        t = threading.Thread(target=ws_client.run_forever, daemon=True)
-        t.start()
-        done.wait(timeout=10)
-        ws_client.close()
-
-        if cookies:
-            log.info("CDP extracted %d cookies for %s", len(cookies), TARGET_DOMAIN)
-            log.info("Cookies found: %s", list(cookies.keys()))
-            return cookies
-
-    except ImportError:
-        log.debug("websocket-client not installed – cannot use CDP websocket")
-    except Exception as exc:
-        log.debug("CDP websocket error: %s", exc)
-
-    return None
-
-
-# ── SQLite fallback (Chrome cookie database) ─────────────────────────────────
-
-def _find_chrome_cookie_db() -> Optional[Path]:
-    """Locate Chrome's Cookies SQLite file on Windows."""
-    appdata = os.environ.get("LOCALAPPDATA", "")
-    candidates = [
-        Path(appdata) / "Google" / "Chrome" / "User Data" / "Default" / "Cookies",
-        Path(appdata) / "Google" / "Chrome" / "User Data" / "Default" / "Network" / "Cookies",
-        Path(os.path.expanduser("~")) / ".config" / "google-chrome" / "Default" / "Cookies",
-    ]
-    for p in candidates:
-        if p.exists():
-            return p
-    return None
-
-
-def _sqlite_get_cookies() -> Optional[dict[str, str]]:
-    """
-    Read cookies directly from Chrome's Cookies SQLite file.
-    Note: values may be encrypted on modern Chrome; returns raw bytes as hex
-    for the caller to handle.  This is a best-effort fallback only.
-    """
-    db_path = _find_chrome_cookie_db()
-    if db_path is None:
-        log.debug("Chrome Cookies DB not found")
-        return None
-
-    # Copy to temp file so Chrome's lock doesn't block us
-    tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-    try:
-        tmp.write(db_path.read_bytes())
-        tmp.flush()
-        tmp.close()
-
-        conn = sqlite3.connect(tmp.name)
-        cur = conn.cursor()
-        cur.execute(
-            "SELECT name, value FROM cookies WHERE host_key LIKE ?",
-            (f"%{TARGET_DOMAIN}%",),
-        )
-        rows = cur.fetchall()
-        conn.close()
-
-        cookies = {name: value for name, value in rows if value}
-        if cookies:
-            log.info("SQLite extracted %d cookies (may be encrypted)", len(cookies))
-            return cookies
-    except Exception as exc:
-        log.debug("SQLite cookie extraction failed: %s", exc)
-    finally:
-        try:
-            os.unlink(tmp.name)
-        except OSError:
-            pass
-
-    return None
-
-
-# ── Public interface ──────────────────────────────────────────────────────────
-
-def get_cf_cookies(timeout: int = 120) -> dict[str, str]:
-    """
-    Wait up to *timeout* seconds for Cloudflare cookies to be present.
-    First tries CDP, then SQLite.
-    Raises RuntimeError if cookies cannot be obtained.
-    """
-    deadline = time.monotonic() + timeout
-    attempt = 0
-
-    while time.monotonic() < deadline:
-        attempt += 1
-        log.debug("Cookie extraction attempt %d", attempt)
-
-        # Try CDP first (most reliable)
-        cookies = _cdp_get_cookies()
-        if cookies and "__cfwaitingroom" in cookies:
-            log.info("Got cf_clearance via CDP")
-            return cookies
-
-        # Fall back to SQLite
-        cookies = _sqlite_get_cookies()
-        if cookies and "cf_clearance" in cookies:
-            log.info("Got cf_clearance via SQLite")
-            return cookies
-
-        log.info(
-            "Waiting for Cloudflare clearance cookie… (attempt %d, %.0fs remaining)",
-            attempt,
-            deadline - time.monotonic(),
-        )
-        time.sleep(5)
-
-    raise RuntimeError(
-        "Could not obtain cf_clearance cookie within timeout. "
-        "Please open Chrome with --remote-debugging-port=9222 and "
-        f"navigate to https://{TARGET_DOMAIN} manually."
-    )
-
-
-def has_cf_challenge(cookies: dict[str, str]) -> bool:
-    """Return True if we appear to be missing a valid Cloudflare token."""
-    return "__cfwaitingroom" not in cookies
-
-
-# ── Keepalive scheduler ───────────────────────────────────────────────────────
-
-class KeepaliveScheduler:
-    """
-    Background thread that periodically performs human-like browser actions
-    to prevent Cloudflare from invalidating the session.
-    """
+class BrowserManager:
+    """Manages the Playwright browser lifecycle and virtual display."""
 
     def __init__(self):
+        self._display = None
+        self.playwright = None
+        self.browser_context = None
+        self.page = None
+        self._keepalive_thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
-        self._thread: Optional[threading.Thread] = None
 
     def start(self):
-        if self._thread and self._thread.is_alive():
-            return
-        self._stop_event.clear()
-        self._thread = threading.Thread(
-            target=self._loop, name="keepalive", daemon=True
+        """Starts the browser and initializes the keep-alive loop."""
+        log.info("Starting BrowserManager...")
+        
+        # Start virtual display on Linux
+        if sys.platform.startswith("linux"):
+            try:
+                from pyvirtualdisplay import Display
+                log.info("Linux detected. Starting Xvfb virtual display...")
+                self._display = Display(visible=0, size=(1920, 1080))
+                self._display.start()
+            except ImportError:
+                log.warning("PyVirtualDisplay not installed. Playwright will run in normal mode.")
+            except Exception as exc:
+                log.error("Failed to start virtual display: %s", exc)
+
+        # Import playwright
+        try:
+            from playwright.sync_api import sync_playwright
+        except ImportError:
+            raise RuntimeError("playwright is not installed. Run: pip install playwright")
+
+        self.playwright = sync_playwright().start()
+        
+        # We use a persistent context so cookies (cf_clearance) are saved across restarts
+        user_data_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "playwright_profile")
+        os.makedirs(user_data_dir, exist_ok=True)
+        
+        log.info("Launching Playwright Chromium (headless=False) to bypass Cloudflare...")
+        
+        # headless=False is critical to bypass Cloudflare on both desktop and xvfb
+        self.browser_context = self.playwright.chromium.launch_persistent_context(
+            user_data_dir=user_data_dir,
+            headless=False,
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-dev-shm-usage"
+            ],
+            viewport={"width": 1920, "height": 1080},
+            locale="en-US"
         )
-        self._thread.start()
-        log.info("Keepalive scheduler started")
+        
+        # Hide playwright navigator properties
+        self.browser_context.add_init_script(
+            "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+        )
+
+        # Use the default page if it exists, or create one
+        pages = self.browser_context.pages
+        self.page = pages[0] if pages else self.browser_context.new_page()
+
+        # Navigate to target domain to clear Cloudflare
+        target_url = f"https://{TARGET_DOMAIN}"
+        log.info("Navigating to %s to solve Cloudflare challenge...", target_url)
+        
+        self.page.goto(target_url, wait_until="domcontentloaded")
+        
+        # Wait for Cloudflare to clear
+        self._wait_for_cloudflare()
+        
+        log.info("Cloudflare cleared successfully!")
+
+        # Start keepalive loop
+        self._stop_event.clear()
+        self._keepalive_thread = threading.Thread(target=self._keepalive_loop, name="keepalive", daemon=True)
+        self._keepalive_thread.start()
+
+    def _wait_for_cloudflare(self, timeout=60):
+        """Wait until the page title is not a Cloudflare challenge title."""
+        deadline = time.monotonic() + timeout
+        cf_titles = ["Just a moment", "Attention Required", "Access denied"]
+        
+        while time.monotonic() < deadline:
+            title = self.page.title()
+            
+            # If the title is something real like "ADY", we are probably clear
+            if not any(cf in title for cf in cf_titles):
+                if "ADY |" in title or "ADY" in title:
+                    return # Page has loaded successfully
+                
+                # Double check that we have the cf_clearance cookie
+                cookies = self.browser_context.cookies()
+                has_cf = any(c['name'] == 'cf_clearance' for c in cookies)
+                if has_cf:
+                    return
+            
+            safe_title = title.encode("ascii", "ignore").decode()
+            log.info("Waiting for Cloudflare... (Title: %s)", safe_title)
+            time.sleep(3)
+            
+        raise RuntimeError("Cloudflare challenge not solved within timeout.")
 
     def stop(self):
+        """Stop keepalive, browser, and display."""
+        log.info("Stopping BrowserManager...")
         self._stop_event.set()
-        if self._thread:
-            self._thread.join(timeout=5)
-        log.info("Keepalive scheduler stopped")
+        if self._keepalive_thread:
+            self._keepalive_thread.join(timeout=5)
+            
+        if self.browser_context:
+            self.browser_context.close()
+        if self.playwright:
+            self.playwright.stop()
+        if self._display:
+            self._display.stop()
 
-    def _loop(self):
+    # ── Keepalive Logic ────────────────────────────────────────────────────────
+    def _keepalive_loop(self):
+        import random
+        from browser.keepalive import perform_keepalive_action
+        
         while not self._stop_event.is_set():
             interval = random.uniform(KEEPALIVE_MIN_SECONDS, KEEPALIVE_MAX_SECONDS)
             log.debug("Next keepalive in %.0f seconds", interval)
 
-            # Wait in small increments so we can respond to stop quickly
             deadline = time.monotonic() + interval
             while time.monotonic() < deadline:
                 if self._stop_event.is_set():
                     return
-                time.sleep(min(10, deadline - time.monotonic()))
+                time.sleep(min(5, deadline - time.monotonic()))
 
-            # Focus browser window first
-            focus_browser_window(TARGET_DOMAIN)
-            time.sleep(random.uniform(0.5, 1.5))
-
-            # Perform a random human-like action
-            if not perform_keepalive_action():
-                log.debug("Keepalive action skipped (pyautogui unavailable)")
+            try:
+                # Reload page occasionally to keep session completely fresh
+                if random.random() < 0.2:
+                    log.debug("Keepalive: Reloading page")
+                    self.page.reload()
+                else:
+                    perform_keepalive_action(self.page)
+            except Exception as exc:
+                log.warning("Keepalive action failed: %s", exc)
