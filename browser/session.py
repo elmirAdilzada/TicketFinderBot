@@ -67,20 +67,35 @@ class BrowserManager:
             args=[
                 "--disable-blink-features=AutomationControlled",
                 "--no-sandbox",
-                "--disable-dev-shm-usage"
+                "--disable-dev-shm-usage",
+                "--disable-web-security",
+                "--disable-features=IsolateOrigins,site-per-process",
+                "--window-size=1920,1080",
             ],
             viewport={"width": 1920, "height": 1080},
-            locale="en-US"
-        )
-        
-        # Hide playwright navigator properties
-        self.browser_context.add_init_script(
-            "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+            locale="en-US",
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/136.0.0.0 Safari/537.36"
+            ),
         )
 
         # Use the default page if it exists, or create one
         pages = self.browser_context.pages
         self.page = pages[0] if pages else self.browser_context.new_page()
+
+        # Apply playwright-stealth to hide all automation signals
+        try:
+            from playwright_stealth import stealth_sync
+            stealth_sync(self.page)
+            log.info("Playwright-stealth applied successfully")
+        except ImportError:
+            log.warning("playwright-stealth not installed, skipping stealth mode")
+            # Fallback: manually hide webdriver property
+            self.browser_context.add_init_script(
+                "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+            )
 
         # Navigate to target domain to clear Cloudflare
         target_url = f"https://{TARGET_DOMAIN}"
