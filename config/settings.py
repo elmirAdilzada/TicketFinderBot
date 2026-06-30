@@ -12,6 +12,11 @@ load_dotenv()
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID   = os.getenv("TELEGRAM_CHAT_ID", "")
 
+# ── Proxy ─────────────────────────────────────────────────────────────────────
+PROXY_SERVER   = os.getenv("PROXY_SERVER", "")    # e.g. "http://host:port"
+PROXY_USERNAME = os.getenv("PROXY_USERNAME", "")
+PROXY_PASSWORD = os.getenv("PROXY_PASSWORD", "")
+
 # ── Routes to monitor ─────────────────────────────────────────────────────────
 # Station IDs discovered from HAR: Baku RWS = 232, Tbilisi = 170
 ROUTES = [

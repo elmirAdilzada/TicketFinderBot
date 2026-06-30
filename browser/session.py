@@ -59,11 +59,22 @@ class BrowserManager:
         os.makedirs(user_data_dir, exist_ok=True)
         
         log.info("Launching Playwright Chromium (headless=False) to bypass Cloudflare...")
-        
+
+        # Build proxy config from .env if provided
+        from config.settings import PROXY_SERVER, PROXY_USERNAME, PROXY_PASSWORD
+        proxy_config = None
+        if PROXY_SERVER:
+            proxy_config = {"server": PROXY_SERVER}
+            if PROXY_USERNAME:
+                proxy_config["username"] = PROXY_USERNAME
+                proxy_config["password"] = PROXY_PASSWORD
+            log.info("Using proxy: %s", PROXY_SERVER)
+
         # headless=False is critical to bypass Cloudflare on both desktop and xvfb
         self.browser_context = self.playwright.chromium.launch_persistent_context(
             user_data_dir=user_data_dir,
             headless=False,
+            proxy=proxy_config,
             args=[
                 "--disable-blink-features=AutomationControlled",
                 "--no-sandbox",
