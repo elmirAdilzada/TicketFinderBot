@@ -156,6 +156,21 @@ class BrowserManager:
             pages = ctx.pages
             page = pages[0] if pages else ctx.new_page()
 
+            # ── Block bandwidth-heavy resources via proxy ──────────────────────
+            # Images, fonts, media and stylesheets are not needed for API calls.
+            # This reduces proxy bandwidth by ~80-90%.
+            BLOCKED_TYPES = {"image", "media", "font", "stylesheet"}
+            # Keep JS unblocked — needed for grecaptcha and page logic
+            # Keep 'script' unblocked for the same reason
+            def _handle_route(route):
+                if route.request.resource_type in BLOCKED_TYPES:
+                    route.abort()
+                else:
+                    route.continue_()
+
+            page.route("**/*", _handle_route)
+            log.info("Resource blocking enabled (images/media/fonts/css blocked)")
+
             # Apply stealth
             try:
                 from playwright_stealth import stealth_sync
@@ -197,10 +212,8 @@ class BrowserManager:
                         self._wait_for_cloudflare(page, ctx, timeout=120)
                     elif kind == "keepalive":
                         from browser.keepalive import perform_keepalive_action
-                        if payload == "reload":
-                            page.reload()
-                        else:
-                            perform_keepalive_action(page)
+                        # Never reload — it costs full page bandwidth through proxy
+                        perform_keepalive_action(page)
                 except Exception as exc:
                     result_holder["error"] = exc
                 finally:
