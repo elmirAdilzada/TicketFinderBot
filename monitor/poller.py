@@ -84,8 +84,7 @@ def _handle_cloudflare_challenge(browser) -> None:
     # Wait for fresh cookies with a long timeout
     log.info("Waiting for Playwright to solve Cloudflare challenge in browser…")
     try:
-        browser.page.reload()
-        browser._wait_for_cloudflare(timeout=300)
+        browser.reload_page()
         log.info("Cloudflare resolved – resuming")
         notify_cloudflare_resolved()
     except RuntimeError:
@@ -114,8 +113,8 @@ def run_monitor() -> None:
         log.critical("Failed to start browser: %s", exc)
         return
 
-    # Pass the playwright page directly to the API client
-    client = ADYApiClient(browser.page)
+    # Pass the browser manager (thread-safe queue) to the API client
+    client = ADYApiClient(browser)
 
     force_poll_event = threading.Event()
     listener = TelegramListener(

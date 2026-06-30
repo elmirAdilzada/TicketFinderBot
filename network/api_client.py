@@ -97,8 +97,9 @@ class ADYApiClient:
 
     CLOUDFLARE_TITLES = {"Just a moment", "Attention Required", "Access denied"}
 
-    def __init__(self, page):
-        self._page = page
+    def __init__(self, browser):
+        """browser: BrowserManager instance (thread-safe evaluate queue)."""
+        self._browser = browser
 
     def refresh_cookies(self, cf_cookies: dict[str, str]) -> None:
         pass # Playwright manages cookies natively, so we don't need this method anymore
@@ -139,18 +140,15 @@ class ADYApiClient:
     def _playwright_execute_fetch(self, url: str, payload: dict) -> Optional[dict]:
         """
         Execute the fetch request natively inside the Playwright browser page.
+        Routes through the thread-safe BrowserManager queue.
         """
         import json
-        
-        if not self._page or self._page.is_closed():
-            log.warning("Playwright page is closed or invalid")
-            return None
-            
+
         js_code = f'''
         () => {{
             return new Promise((resolve) => {{
                 setTimeout(() => resolve(JSON.stringify({{status: 504, error: "JS Promise Timeout"}})), 12000);
-                
+
                 try {{
                     const body_json = {json.dumps(payload)};
                     if (typeof grecaptcha !== 'undefined' && grecaptcha.ready) {{
@@ -206,9 +204,9 @@ class ADYApiClient:
             }});
         }}
         '''
-        
+
         try:
-            val = self._page.evaluate(js_code)
+            val = self._browser.evaluate(js_code, timeout=20.0)
             if val:
                 parsed = json.loads(val)
                 if parsed.get("status") in (403, 503):
