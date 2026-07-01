@@ -200,10 +200,12 @@ class TelegramListener:
     traintrip details via CDP and replies with seat info.
     """
 
-    def __init__(self, api_client, routes: list[dict], force_poll_event: threading.Event = None):
+    def __init__(self, api_client, routes: list[dict], force_poll_event: threading.Event = None,
+                 bot_status: dict = None):
         self.api_client = api_client
         self.routes = routes
         self.force_poll_event = force_poll_event
+        self.bot_status = bot_status or {}
         self._thread: Optional[threading.Thread] = None
         self._offset = 0
         self._date_pattern = re.compile(r"^\d{2}-\d{2}-\d{4}$")
@@ -311,11 +313,26 @@ class TelegramListener:
             
     def _handle_settings_menu(self):
         from config.dynamic_settings import get_setting
+
+        # Last poll time
+        last_poll = self.bot_status.get("last_poll_time")
+        if last_poll:
+            last_poll_str = last_poll.strftime("%d.%m.%Y %H:%M:%S")
+        else:
+            last_poll_str = "Hələ yoxlanılmayıb"
+
+        # Proxy status
+        proxy_ok = self.bot_status.get("proxy_ok", True)
+        proxy_icon = "🟢" if proxy_ok else "🔴"
+        proxy_str = "OK" if proxy_ok else "XƏTA"
+
         lines = [
             "⚙️ <b>Bot Settings</b>\n",
             f"• POLL_MIN_SECONDS: {get_setting('POLL_MIN_SECONDS', 60)}",
             f"• POLL_MAX_SECONDS: {get_setting('POLL_MAX_SECONDS', 120)}",
             f"• MAX_NEW_DATES_LISTED: {get_setting('MAX_NEW_DATES_LISTED', 5)}\n",
+            f"🕐 <b>Son yoxlanma:</b> {last_poll_str}",
+            f"{proxy_icon} <b>Proxy/Session:</b> {proxy_str}\n",
             "Select a setting below to change it:"
         ]
         

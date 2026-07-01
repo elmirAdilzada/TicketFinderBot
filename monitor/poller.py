@@ -116,11 +116,18 @@ def run_monitor() -> None:
     # Pass the browser manager (thread-safe queue) to the API client
     client = ADYApiClient(browser)
 
+    # Shared status dict accessible from TelegramListener
+    bot_status = {
+        "last_poll_time": None,   # datetime of last successful poll cycle
+        "proxy_ok": True,
+    }
+
     force_poll_event = threading.Event()
     listener = TelegramListener(
         api_client=client,
         routes=ROUTES,
         force_poll_event=force_poll_event,
+        bot_status=bot_status,
     )
     listener.start()
 
@@ -132,6 +139,9 @@ def run_monitor() -> None:
              poll_min // 60, poll_max // 60)
 
     forced_poll_cycle = False
+    consecutive_failures = 0
+    MAX_CONSECUTIVE_FAILURES = 5
+
     while True:
         # ── Poll all routes (dates only) ──────────────────────────────────
         log.info("Starting poll cycle…")
@@ -184,6 +194,46 @@ def run_monitor() -> None:
 
         # Save state after every full cycle
         save_state(state)
+
+        # ── Update last poll time and reset failure counter ────────────────
+        import datetime
+        bot_status["last_poll_time"] = datetime.datetime.now()
+        consecutive_failures = 0
+
+        # ── Proxy / session health check ───────────────────────────────────
+        # If all routes failed consecutively, the proxy/session is dead.
+        # Notify via Telegram and attempt to restart the browser.
+        if all(
+            state.get(r["label"]) is None for r in ROUTES
+        ):
+            consecutive_failures += 1
+            log.warning("All routes returned None (%d/%d). Possible session/proxy failure.",
+                         consecutive_failures, MAX_CONSECUTIVE_FAILURES)
+            bot_status["proxy_ok"] = False
+        else:
+            consecutive_failures = 0
+            bot_status["proxy_ok"] = True
+
+        if consecutive_failures >= MAX_CONSECUTIVE_FAILURES:
+            log.error("Session/proxy appears dead. Notifying and restarting browser...")
+            notify_error(
+                "⚠️ <b>Bot session/proxy failure detected!</b>\n"
+                f"All routes failed {consecutive_failures} times in a row.\n"
+                "Restarting browser..."
+            )
+            try:
+                browser.stop()
+                import time as _t; _t.sleep(5)
+                browser = BrowserManager()
+                browser.start()
+                client = ADYApiClient(browser)
+                listener.api_client = client
+                consecutive_failures = 0
+                bot_status["proxy_ok"] = True
+                notify_error("✅ Browser restarted successfully.")
+            except Exception as exc:
+                log.error("Failed to restart browser: %s", exc)
+                notify_error(f"❌ Browser restart failed: {exc}")
 
         # ── Wait for next poll ─────────────────────────────────────────────
         poll_min = get_setting("POLL_MIN_SECONDS", 60)
