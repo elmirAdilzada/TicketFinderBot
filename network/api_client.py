@@ -177,14 +177,20 @@ class ADYApiClient:
                 const p = {json.dumps(payload)};
                 p.g_token = token;
 
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
+
                 const r = await fetch('{url}', {{
                     method: 'POST',
                     headers: {{
                         'Content-Type': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest'
                     }},
-                    body: JSON.stringify(p)
+                    body: JSON.stringify(p),
+                    signal: controller.signal
                 }});
+                
+                clearTimeout(timeoutId);
 
                 const j = await r.json();
                 return JSON.stringify({{status: r.status, data: j}});

@@ -104,7 +104,7 @@ class BrowserManager:
         self._stop_event.set()
         self._eval_queue.put(_STOP)
         if self._pw_thread:
-            self._pw_thread.join(timeout=10)
+            self._pw_thread.join(timeout=30)
         if self._display:
             self._display.stop()
 
@@ -243,6 +243,10 @@ class BrowserManager:
         cf_titles = ["Just a moment", "Attention Required", "Access denied"]
 
         while time.monotonic() < deadline:
+            if self._stop_event.is_set():
+                log.info("Cloudflare wait aborted due to stop event.")
+                break
+                
             title = page.title()
             if not any(cf in title for cf in cf_titles):
                 if "ADY" in title:
@@ -253,9 +257,17 @@ class BrowserManager:
 
             safe_title = title.encode("ascii", "ignore").decode()
             log.info("Waiting for Cloudflare... (Title: %s)", safe_title)
-            time.sleep(3)
+            
+            # Wait in small chunks to remain responsive to stop events
+            sleep_deadline = time.monotonic() + 3
+            while time.monotonic() < sleep_deadline:
+                if self._stop_event.is_set():
+                    log.info("Cloudflare wait aborted due to stop event.")
+                    return
+                time.sleep(0.5)
 
-        raise RuntimeError("Cloudflare challenge not solved within timeout.")
+        if not self._stop_event.is_set():
+            raise RuntimeError("Cloudflare challenge not solved within timeout.")
 
     # ── Keepalive Loop ─────────────────────────────────────────────────────────
 
