@@ -237,7 +237,7 @@ class BrowserManager:
             self._start_error = exc
             self._ready_event.set()
 
-    def _wait_for_cloudflare(self, page, ctx, timeout=60):
+    def _wait_for_cloudflare(self, page, ctx, timeout=10):
         """Called only from the playwright thread."""
         deadline = time.monotonic() + timeout
         cf_titles = ["Just a moment", "Attention Required", "Access denied"]
