@@ -528,7 +528,7 @@ class TelegramListener:
                 _send("❌ Invalid format. Edit cancelled.", chat_id=chat_id)
                 return
             if parts[0].lower() == "none":
-                val = None
+                val = "none"  # Explicitly store "none" so it doesn't fallback
             else:
                 # Expecting: ip:port [username] [password]
                 val = {"server": f"http://{parts[0]}" if not parts[0].startswith("http") else parts[0]}
@@ -574,7 +574,10 @@ class TelegramListener:
         next_restart_str = datetime.fromtimestamp(next_restart).strftime("%d.%m.%Y %H:%M:%S")
 
         current_proxy = get_setting("PROXY_CONFIG", None)
-        proxy_display = current_proxy["server"] if current_proxy and isinstance(current_proxy, dict) else "None"
+        if current_proxy == "none":
+            proxy_display = "None (Disabled)"
+        else:
+            proxy_display = current_proxy["server"] if current_proxy and isinstance(current_proxy, dict) else "None"
 
         lines = [
             "⚙️ <b>Bot Settings</b>\n",

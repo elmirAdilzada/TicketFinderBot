@@ -127,7 +127,9 @@ class BrowserManager:
             
             proxy_config = get_setting("PROXY_CONFIG")
             
-            if not proxy_config and PROXY_SERVER:
+            if proxy_config == "none":
+                proxy_config = None  # Explicitly disabled
+            elif not proxy_config and PROXY_SERVER:
                 # Fallback to .env settings
                 proxy_config = {"server": f"http://{PROXY_SERVER}" if not PROXY_SERVER.startswith("http") else PROXY_SERVER}
                 if PROXY_USERNAME:
