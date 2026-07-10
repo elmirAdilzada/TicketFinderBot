@@ -45,7 +45,7 @@ def get_setting(key: str, default=None):
         return _DEFAULTS[key]
     return default
 
-def set_setting(key: str, value: int):
+def set_setting(key: str, value):
     """Save a setting dynamically."""
     global _cache
     _cache = _load()

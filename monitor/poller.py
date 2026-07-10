@@ -150,7 +150,7 @@ def run_monitor() -> None:
     while True:
         # Wait until /startfinding is received
         if not is_finding_event.is_set():
-            log.info("Axtarış dayandırılıb. /startfinding əmri gözlənilir...")
+            log.info("Search is paused. Waiting for /startfinding command...")
             # Wait with a timeout so we can still handle signals or force polls
             is_finding_event.wait(timeout=10)
             if not is_finding_event.is_set():
