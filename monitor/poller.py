@@ -109,13 +109,6 @@ def run_monitor() -> None:
     from browser.session import BrowserManager
     
     browser = BrowserManager()
-    try:
-        browser.start()
-    except Exception as exc:
-        log.critical("Failed to start browser: %s", exc)
-        return
-
-    # Pass the browser manager (thread-safe queue) to the API client
     client = ADYApiClient(browser)
 
     # Shared status dict accessible from TelegramListener
@@ -136,6 +129,12 @@ def run_monitor() -> None:
     listener.start()
 
     notify_startup(ROUTES)
+
+    try:
+        browser.start()
+    except Exception as exc:
+        log.critical("Failed to start browser initially: %s", exc)
+        bot_status["proxy_ok"] = False
 
     poll_min = get_setting("POLL_MIN_SECONDS", 60)
     poll_max = get_setting("POLL_MAX_SECONDS", 120)
@@ -186,6 +185,7 @@ def run_monitor() -> None:
                     notify_browser_restarted()
             except Exception as exc:
                 log.error("Failed to restart browser automatically: %s", exc)
+                bot_status["proxy_ok"] = False
 
         # ── Poll all routes (dates only) ──────────────────────────────────
         log.info("Starting poll cycle…")

@@ -195,7 +195,7 @@ class BrowserManager:
             # Navigate and wait for Cloudflare
             log.info("Navigating to https://%s ...", TARGET_DOMAIN)
             page.goto(f"https://{TARGET_DOMAIN}", wait_until="domcontentloaded")
-            self._wait_for_cloudflare(page, ctx)
+            self._wait_for_cloudflare(page, ctx, timeout=120)
             log.info("Cloudflare cleared successfully!")
 
             # Start keepalive thread (also routes through the queue)
