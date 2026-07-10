@@ -221,8 +221,8 @@ def notify_dates_disappeared(label: str, disappeared_dates: list[str]) -> Option
 def notify_all_dates_deleted(label: str) -> Optional[int]:
     """Notify when all dates for a route are completely deleted (anomaly)."""
     text = (
-        f"⚠️ <b>{label} — Bütün biletlər silindi!</b>\n\n"
-        f"Sistemdə yenilənmə prosesi gedir.\n"
+        f"⚠️ <b>{label} — All tickets deleted!</b>\n\n"
+        f"System update is in progress.\n"
         f"<b>Detected:</b> {_detected_now()}"
     )
     return _send(text)
@@ -387,8 +387,34 @@ class TelegramListener:
                                 return user_data.get("perms", {}).get(cmd_name, False)
                             return False
 
-                        if text.lower() == "/start":
-                            _send(f"👋 <b>Welcome!</b>\nYour Chat ID is: <code>{chat_id}</code>\nPlease ask the admin to approve this ID.", chat_id=chat_id)
+                        if text == "🔍 Check Date":
+                            _send("Please send the date you want to check. (Example: 12-08-2026)", chat_id=chat_id)
+                            continue
+                        elif text == "⚙️ Settings":
+                            text = "/settings"
+                        elif text == "📊 Status":
+                            text = "/status"
+                        elif text == "▶️ Start Search":
+                            text = "/startfinding"
+                        elif text == "⏸️ Stop Search":
+                            text = "/stopfinding"
+                        elif text == "👥 Users":
+                            text = "/users"
+
+                        if text.lower() in ("/start", "/menu"):
+                            menu_markup = {
+                                "keyboard": [
+                                    [{"text": "🔍 Check Date"}, {"text": "📊 Status"}],
+                                    [{"text": "▶️ Start Search"}, {"text": "⏸️ Stop Search"}],
+                                    [{"text": "⚙️ Settings"}, {"text": "👥 Users"}]
+                                ],
+                                "resize_keyboard": True,
+                                "is_persistent": True
+                            }
+                            msg = f"👋 <b>Welcome!</b>\nYour Chat ID is: <code>{chat_id}</code>\n\nYou can use the menu below:"
+                            if not is_admin and chat_id not in users:
+                                msg += "\n⚠️ Please ask the admin to approve this ID."
+                            _send(msg, reply_markup=menu_markup, chat_id=chat_id)
                             continue
 
                         if text.lower().startswith("/addchat ") and is_admin:
@@ -431,13 +457,13 @@ class TelegramListener:
                                     self._handle_date_query(text, chat_id)
                                 else:
                                     self._handle_status_query(chat_id)
-                            else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
+                            else: _send("❌ You do not have permission to use this command.", chat_id=chat_id)
                         elif text.lower() == "/check":
                             if has_perm("check"):
                                 _send("🔄 Checking... Please wait.", chat_id=chat_id)
                                 if self.force_poll_event:
                                     self.force_poll_event.set()
-                            else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
+                            else: _send("❌ You do not have permission to use this command.", chat_id=chat_id)
                         elif text.lower() == "/startfinding":
                             if has_perm("startfinding"):
                                 if self.is_finding_event:
@@ -445,21 +471,21 @@ class TelegramListener:
                                     _send("▶️ <b>Search started!</b>\nThe bot will now automatically search for tickets.", chat_id=chat_id)
                                     if self.force_poll_event:
                                         self.force_poll_event.set()
-                            else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
+                            else: _send("❌ You do not have permission to use this command.", chat_id=chat_id)
                         elif text.lower() == "/stopfinding":
                             if has_perm("stopfinding"):
                                 if self.is_finding_event:
                                     self.is_finding_event.clear()
                                     _send("⏸️ <b>Search paused!</b>\nYou can restart it by sending /startfinding.", chat_id=chat_id)
-                            else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
+                            else: _send("❌ You do not have permission to use this command.", chat_id=chat_id)
                         elif text.lower() == "/settings":
                             if has_perm("settings"):
                                 self._handle_settings_menu(chat_id)
-                            else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
+                            else: _send("❌ You do not have permission to use this command.", chat_id=chat_id)
                         elif text.lower() == "/users":
                             if is_admin or has_perm("settings"):
                                 self._handle_users_menu(chat_id)
-                            else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
+                            else: _send("❌ You do not have permission to use this command.", chat_id=chat_id)
                         elif getattr(self, '_waiting_for_setting', None):
                             self._handle_setting_input(text, chat_id)
                         elif getattr(self, '_waiting_for_user_name', None):
@@ -733,7 +759,7 @@ class TelegramListener:
 
     def _remove_user(self, chat_id: str, target_id: str, edit_msg_id: Optional[int] = None):
         if chat_id == target_id:
-            msg = "❌ Siz özünüzü silə bilməzsiniz!"
+            msg = "❌ You cannot remove yourself!"
             if edit_msg_id: _edit(chat_id, edit_msg_id, msg)
             else: _send(msg, chat_id=chat_id)
             return
