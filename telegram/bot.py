@@ -218,6 +218,16 @@ def notify_dates_disappeared(label: str, disappeared_dates: list[str]) -> Option
     return _send("\n".join(lines))
 
 
+def notify_all_dates_deleted(label: str) -> Optional[int]:
+    """Notify when all dates for a route are completely deleted (anomaly)."""
+    text = (
+        f"⚠️ <b>{label} — Bütün biletlər silindi!</b>\n\n"
+        f"Sistemdə yenilənmə prosesi gedir.\n"
+        f"<b>Detected:</b> {_detected_now()}"
+    )
+    return _send(text)
+
+
 def _send_traintrip_details(label: str, trip: Trip, chat_id: str) -> Optional[int]:
     """Format and send detailed seat info for a trip."""
     lines = [

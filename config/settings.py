@@ -32,6 +32,13 @@ ROUTES = [
         "to_station":   232,
         "way":          1,
     },
+    {
+        "label":       "Anomaly Check",
+        "from_station": 232,
+        "to_station":   311,
+        "way":          1,
+        "notify_only_on_empty": True,
+    },
 ]
 
 # ── Polling ───────────────────────────────────────────────────────────────────

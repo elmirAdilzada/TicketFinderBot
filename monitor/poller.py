@@ -227,18 +227,23 @@ def run_monitor() -> None:
                 log.info("Date changes for %s: +%d / -%d (forced=%s)",
                          label, len(diff.new_dates), len(diff.disappeared_dates), forced_poll_cycle)
 
-                # Notify new/updated date list
-                if diff.new_dates or (old_snapshot is None) or forced_poll_cycle:
-                    notify_dates_changed(label, diff.all_dates, diff.new_dates, force_all=forced_poll_cycle)
+                if route.get("notify_only_on_empty"):
+                    if len(new_snapshot.dates) == 0 and old_snapshot and len(old_snapshot.dates) > 0:
+                        from telegram.bot import notify_all_dates_deleted
+                        notify_all_dates_deleted(label)
+                else:
+                    # Notify new/updated date list
+                    if diff.new_dates or (old_snapshot is None) or forced_poll_cycle:
+                        notify_dates_changed(label, diff.all_dates, diff.new_dates, force_all=forced_poll_cycle)
 
-                # Notify disappeared dates (only if they actually disappeared)
-                if diff.disappeared_dates:
-                    disappeared_txts = []
-                    for dv in sorted(diff.disappeared_dates):
-                        old_info = old_snapshot.dates.get(dv, {}) if old_snapshot else {}
-                        txt = old_info.get("trip_date_txt", dv)
-                        disappeared_txts.append(txt)
-                    notify_dates_disappeared(label, disappeared_txts)
+                    # Notify disappeared dates (only if they actually disappeared)
+                    if diff.disappeared_dates:
+                        disappeared_txts = []
+                        for dv in sorted(diff.disappeared_dates):
+                            old_info = old_snapshot.dates.get(dv, {}) if old_snapshot else {}
+                            txt = old_info.get("trip_date_txt", dv)
+                            disappeared_txts.append(txt)
+                        notify_dates_disappeared(label, disappeared_txts)
             else:
                 log.info("No date changes for %s", label)
 
