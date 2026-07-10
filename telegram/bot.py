@@ -626,6 +626,9 @@ class TelegramListener:
 
         found_any = False
         for route in self.routes:
+            if route.get("notify_only_on_empty"):
+                continue
+
             label = route["label"]
             try:
                 trip = self.api_client.get_traintrip(
