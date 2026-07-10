@@ -144,8 +144,7 @@ def run_monitor() -> None:
     consecutive_failures = 0
     MAX_CONSECUTIVE_FAILURES = 5
 
-    browser_start_time = time.time()
-    BROWSER_RESTART_INTERVAL = 3600  # 1 hour in seconds
+    bot_status["browser_start_time"] = time.time()
 
     while True:
         # Wait until /startfinding is received
@@ -157,7 +156,8 @@ def run_monitor() -> None:
                 continue
 
         # Check if browser needs an hourly restart
-        if time.time() - browser_start_time > BROWSER_RESTART_INTERVAL:
+        browser_restart_interval = get_setting("BROWSER_RESTART_INTERVAL", 3600)
+        if time.time() - bot_status.get("browser_start_time", time.time()) > browser_restart_interval:
             log.info("Hourly browser restart triggered to prevent stale sessions.")
             try:
                 browser.stop()
@@ -166,9 +166,12 @@ def run_monitor() -> None:
                 browser.start()
                 client = ADYApiClient(browser)
                 listener.api_client = client
-                browser_start_time = time.time()
+                bot_status["browser_start_time"] = time.time()
                 bot_status["proxy_ok"] = True
                 log.info("Hourly browser restart completed successfully.")
+                
+                from telegram.bot import notify_browser_restarted
+                notify_browser_restarted()
             except Exception as exc:
                 log.error("Failed to restart browser automatically: %s", exc)
 

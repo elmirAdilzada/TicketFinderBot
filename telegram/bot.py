@@ -242,6 +242,10 @@ def notify_error(message: str) -> Optional[int]:
     return _send(text)
 
 
+def notify_browser_restarted() -> Optional[int]:
+    return _send("🔄 <b>Browser session restarted automatically to prevent stale tokens.</b>")
+
+
 # ── Telegram Listener (background thread) ────────────────────────────────────
 
 class TelegramListener:
@@ -308,14 +312,14 @@ class TelegramListener:
                         chat_id = str(msg.get("chat", {}).get("id", ""))
 
                         admin_chat = str(TELEGRAM_CHAT_ID)
-                        is_authorized = chat_id in _get_all_chat_ids()
+                        is_authorized = (chat_id == admin_chat)
 
                         if text.lower() == "/start":
                             _send(f"👋 <b>Welcome!</b>\nYour Chat ID is: <code>{chat_id}</code>\nPlease ask the admin to approve this ID.", chat_id=chat_id)
                             continue
 
                         if not is_authorized:
-                            # Ignore other messages from unauthorized users
+                            # Ignore other messages from unauthorized users (or broadcast-only users)
                             continue
 
                         if text.lower().startswith("/addchat ") and chat_id == admin_chat:
@@ -371,9 +375,10 @@ class TelegramListener:
                         data = cb.get("data", "")
                         chat_id = str(cb.get("message", {}).get("chat", {}).get("id", ""))
                         
-                        is_authorized = chat_id in _get_all_chat_ids()
+                        admin_chat = str(TELEGRAM_CHAT_ID)
+                        is_authorized = (chat_id == admin_chat)
                         
-                        # Only respond to authorized chats
+                        # Only respond to authorized chats (admin only)
                         if not is_authorized:
                             continue
                             
@@ -421,21 +426,30 @@ class TelegramListener:
         proxy_ok = self.bot_status.get("proxy_ok", True)
         proxy_icon = "🟢" if proxy_ok else "🔴"
         proxy_str = "OK" if proxy_ok else "ERROR"
+        
+        # Browser Restart
+        b_start = self.bot_status.get("browser_start_time", time.time())
+        b_interval = get_setting("BROWSER_RESTART_INTERVAL", 3600)
+        next_restart = b_start + b_interval
+        next_restart_str = datetime.fromtimestamp(next_restart).strftime("%d.%m.%Y %H:%M:%S")
 
         lines = [
             "⚙️ <b>Bot Settings</b>\n",
             f"• POLL_MIN_SECONDS: {get_setting('POLL_MIN_SECONDS', 60)}",
             f"• POLL_MAX_SECONDS: {get_setting('POLL_MAX_SECONDS', 120)}",
-            f"• MAX_NEW_DATES_LISTED: {get_setting('MAX_NEW_DATES_LISTED', 5)}\n",
+            f"• MAX_NEW_DATES_LISTED: {get_setting('MAX_NEW_DATES_LISTED', 5)}",
+            f"• BROWSER_RESTART_INTERVAL: {get_setting('BROWSER_RESTART_INTERVAL', 3600)}s\n",
             f"🕐 <b>Last check:</b> {last_poll_str}",
-            f"{proxy_icon} <b>Proxy/Session:</b> {proxy_str}\n",
+            f"{proxy_icon} <b>Proxy/Session:</b> {proxy_str}",
+            f"🔄 <b>Next browser restart:</b> {next_restart_str}\n",
             "Select a setting below to change it:"
         ]
         
         inline_keyboard = [
             [{"text": "⏱️ Edit Poll Min", "callback_data": "edit_setting:POLL_MIN_SECONDS"}],
             [{"text": "⏱️ Edit Poll Max", "callback_data": "edit_setting:POLL_MAX_SECONDS"}],
-            [{"text": "📋 Edit Max Dates", "callback_data": "edit_setting:MAX_NEW_DATES_LISTED"}]
+            [{"text": "📋 Edit Max Dates", "callback_data": "edit_setting:MAX_NEW_DATES_LISTED"}],
+            [{"text": "🔄 Edit Restart Interval", "callback_data": "edit_setting:BROWSER_RESTART_INTERVAL"}]
         ]
         
         _send("\n".join(lines), reply_markup={"inline_keyboard": inline_keyboard}, chat_id=chat_id)
