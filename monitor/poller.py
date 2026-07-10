@@ -123,10 +123,12 @@ def run_monitor() -> None:
     }
 
     force_poll_event = threading.Event()
+    is_finding_event = threading.Event()
     listener = TelegramListener(
         api_client=client,
         routes=ROUTES,
         force_poll_event=force_poll_event,
+        is_finding_event=is_finding_event,
         bot_status=bot_status,
     )
     listener.start()
@@ -142,7 +144,34 @@ def run_monitor() -> None:
     consecutive_failures = 0
     MAX_CONSECUTIVE_FAILURES = 5
 
+    browser_start_time = time.time()
+    BROWSER_RESTART_INTERVAL = 3600  # 1 hour in seconds
+
     while True:
+        # Wait until /startfinding is received
+        if not is_finding_event.is_set():
+            log.info("Axtarış dayandırılıb. /startfinding əmri gözlənilir...")
+            # Wait with a timeout so we can still handle signals or force polls
+            is_finding_event.wait(timeout=10)
+            if not is_finding_event.is_set():
+                continue
+
+        # Check if browser needs an hourly restart
+        if time.time() - browser_start_time > BROWSER_RESTART_INTERVAL:
+            log.info("Hourly browser restart triggered to prevent stale sessions.")
+            try:
+                browser.stop()
+                import time as _t; _t.sleep(2)
+                browser = BrowserManager()
+                browser.start()
+                client = ADYApiClient(browser)
+                listener.api_client = client
+                browser_start_time = time.time()
+                bot_status["proxy_ok"] = True
+                log.info("Hourly browser restart completed successfully.")
+            except Exception as exc:
+                log.error("Failed to restart browser automatically: %s", exc)
+
         # ── Poll all routes (dates only) ──────────────────────────────────
         log.info("Starting poll cycle…")
 

@@ -56,6 +56,26 @@ def _send(text: str, parse_mode: str = "HTML", reply_markup: Optional[dict] = No
     return None
 
 
+def set_bot_commands() -> None:
+    """Sets the default commands in the Telegram bot command palette."""
+    if not TELEGRAM_BOT_TOKEN or TELEGRAM_BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
+        return
+        
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/setMyCommands"
+    commands = [
+        {"command": "startfinding", "description": "Start automatic search"},
+        {"command": "stopfinding", "description": "Pause automatic search"},
+        {"command": "settings", "description": "Configure monitor settings"},
+        {"command": "yenile", "description": "Force manual check now"},
+        {"command": "dates", "description": "Show monitor status & instructions"}
+    ]
+    
+    try:
+        requests.post(url, json={"commands": commands}, timeout=10)
+    except Exception as exc:
+        log.warning("Failed to set bot commands: %s", exc)
+
+
 # ── Formatters ────────────────────────────────────────────────────────────────
 
 def _detected_now() -> str:
@@ -172,10 +192,19 @@ def notify_cloudflare_resolved() -> Optional[int]:
 
 
 def notify_startup(routes: list[dict]) -> Optional[int]:
+    # Set bot commands in the command palette
+    set_bot_commands()
+    
     route_lines = "\n".join(f"  • {r['label']}" for r in routes)
     text = (
         f"🟢 <b>ADY Monitor started</b>\n\n"
         f"<b>Monitoring routes:</b>\n{route_lines}\n\n"
+        f"<b>Commands:</b>\n"
+        f"▶️ /startfinding - Start searching for tickets\n"
+        f"⏸️ /stopfinding - Pause searching for tickets\n"
+        f"⚙️ /settings - Configure bot settings\n"
+        f"🔄 /yenilə - Force manual check\n"
+        f"📅 /dates - Show available dates\n\n"
         f"💬 Send a date (DD-MM-YYYY) anytime to check seat details.\n\n"
         f"<b>Time:</b> {_detected_now()}"
     )
@@ -201,10 +230,12 @@ class TelegramListener:
     """
 
     def __init__(self, api_client, routes: list[dict], force_poll_event: threading.Event = None,
+                 is_finding_event: threading.Event = None,
                  bot_status: dict = None):
         self.api_client = api_client
         self.routes = routes
         self.force_poll_event = force_poll_event
+        self.is_finding_event = is_finding_event
         self.bot_status = bot_status or {}
         self._thread: Optional[threading.Thread] = None
         self._offset = 0
@@ -262,10 +293,20 @@ class TelegramListener:
                             self._handle_date_query(text)
                         elif text.lower() in ("/dates", "/status"):
                             self._handle_status_query()
-                        elif text.lower() == "/yenilə":
+                        elif text.lower() in ("/yenilə", "/yenile"):
                             _send("🔄 Yoxlanılır... Gözləyin.")
                             if self.force_poll_event:
                                 self.force_poll_event.set()
+                        elif text.lower() == "/startfinding":
+                            if self.is_finding_event:
+                                self.is_finding_event.set()
+                                _send("▶️ <b>Axtarış başladıldı!</b>\nBot indi avtomatik olaraq biletləri axtaracaq.")
+                                if self.force_poll_event:
+                                    self.force_poll_event.set()
+                        elif text.lower() == "/stopfinding":
+                            if self.is_finding_event:
+                                self.is_finding_event.clear()
+                                _send("⏸️ <b>Axtarış dayandırıldı!</b>\n/startfinding əmrini göndərərək yenidən başlada bilərsiniz.")
                         elif text.lower() == "/settings":
                             self._handle_settings_menu()
                         elif self._waiting_for_setting:
