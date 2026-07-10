@@ -157,10 +157,16 @@ def run_monitor() -> None:
             if not is_finding_event.is_set():
                 continue
 
-        # Check if browser needs an hourly restart
+        # Check if browser needs an hourly restart or if proxy was changed
         browser_restart_interval = get_setting("BROWSER_RESTART_INTERVAL", 3600)
-        if time.time() - bot_status.get("browser_start_time", time.time()) > browser_restart_interval:
-            log.info("Hourly browser restart triggered to prevent stale sessions.")
+        proxy_changed = bot_status.pop("proxy_changed", False)
+        
+        if proxy_changed or (time.time() - bot_status.get("browser_start_time", time.time()) > browser_restart_interval):
+            if proxy_changed:
+                log.info("Proxy change detected! Restarting browser immediately...")
+            else:
+                log.info("Hourly browser restart triggered to prevent stale sessions.")
+                
             try:
                 browser.stop()
                 import time as _t; _t.sleep(2)
@@ -170,10 +176,11 @@ def run_monitor() -> None:
                 listener.api_client = client
                 bot_status["browser_start_time"] = time.time()
                 bot_status["proxy_ok"] = True
-                log.info("Hourly browser restart completed successfully.")
+                log.info("Browser restart completed successfully.")
                 
-                from telegram.bot import notify_browser_restarted
-                notify_browser_restarted()
+                if not proxy_changed:
+                    from telegram.bot import notify_browser_restarted
+                    notify_browser_restarted()
             except Exception as exc:
                 log.error("Failed to restart browser automatically: %s", exc)
 

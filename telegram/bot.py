@@ -415,17 +415,19 @@ class TelegramListener:
                                 _send(f"ℹ️ Chat ID {old_chat} was not in the authorized list.", chat_id=chat_id)
                             continue
 
-                        if self._date_pattern.match(text):
+                        if self._date_pattern.match(text) or text.lower() in ("/dates", "/status"):
                             if has_perm("dates"):
-                                self._handle_date_query(text, chat_id)
-                        elif text.lower() in ("/dates", "/status"):
-                            if has_perm("dates"):
-                                self._handle_status_query(chat_id)
+                                if self._date_pattern.match(text):
+                                    self._handle_date_query(text, chat_id)
+                                else:
+                                    self._handle_status_query(chat_id)
+                            else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
                         elif text.lower() == "/check":
                             if has_perm("check"):
                                 _send("🔄 Checking... Please wait.", chat_id=chat_id)
                                 if self.force_poll_event:
                                     self.force_poll_event.set()
+                            else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
                         elif text.lower() == "/startfinding":
                             if has_perm("startfinding"):
                                 if self.is_finding_event:
@@ -433,16 +435,21 @@ class TelegramListener:
                                     _send("▶️ <b>Search started!</b>\nThe bot will now automatically search for tickets.", chat_id=chat_id)
                                     if self.force_poll_event:
                                         self.force_poll_event.set()
+                            else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
                         elif text.lower() == "/stopfinding":
                             if has_perm("stopfinding"):
                                 if self.is_finding_event:
                                     self.is_finding_event.clear()
                                     _send("⏸️ <b>Search paused!</b>\nYou can restart it by sending /startfinding.", chat_id=chat_id)
+                            else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
                         elif text.lower() == "/settings":
                             if has_perm("settings"):
                                 self._handle_settings_menu(chat_id)
-                        elif text.lower() == "/users" and (is_admin or has_perm("settings")):
-                            self._handle_users_menu(chat_id)
+                            else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
+                        elif text.lower() == "/users":
+                            if is_admin or has_perm("settings"):
+                                self._handle_users_menu(chat_id)
+                            else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
                         elif getattr(self, '_waiting_for_setting', None):
                             self._handle_setting_input(text, chat_id)
                         elif getattr(self, '_waiting_for_user_name', None):
@@ -468,26 +475,38 @@ class TelegramListener:
                             if has_perm("dates"):
                                 date_txt = data.split("check_seat:")[1]
                                 self._handle_date_query(date_txt, chat_id)
+                            else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
                         elif data.startswith("edit_setting:"):
                             if has_perm("settings"):
                                 setting_key = data.split("edit_setting:")[1]
                                 self._waiting_for_setting = setting_key
                                 _send(f"✏️ Send the new value for <b>{setting_key}</b>:", chat_id=chat_id)
-                        elif data == "manage_users" and (is_admin or has_perm("settings")):
-                            self._handle_users_menu(chat_id, cb.get("message", {}).get("message_id"))
-                        elif data.startswith("user_details:") and (is_admin or has_perm("settings")):
-                            target_id = data.split(":")[1]
-                            self._handle_user_details(chat_id, target_id, cb.get("message", {}).get("message_id"))
-                        elif data.startswith("toggle_perm:") and (is_admin or has_perm("settings")):
-                            _, target_id, perm = data.split(":")
-                            self._toggle_user_perm(chat_id, target_id, perm, cb.get("message", {}).get("message_id"))
-                        elif data.startswith("edit_user_name:") and (is_admin or has_perm("settings")):
-                            target_id = data.split(":")[1]
-                            self._waiting_for_user_name = target_id
-                            _send(f"✏️ Send the new name for User <b>{target_id}</b>:", chat_id=chat_id)
-                        elif data.startswith("remove_user:") and (is_admin or has_perm("settings")):
-                            target_id = data.split(":")[1]
-                            self._remove_user(chat_id, target_id, cb.get("message", {}).get("message_id"))
+                            else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
+                        elif data == "manage_users":
+                            if is_admin or has_perm("settings"):
+                                self._handle_users_menu(chat_id, cb.get("message", {}).get("message_id"))
+                            else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
+                        elif data.startswith("user_details:"):
+                            if is_admin or has_perm("settings"):
+                                target_id = data.split(":")[1]
+                                self._handle_user_details(chat_id, target_id, cb.get("message", {}).get("message_id"))
+                            else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
+                        elif data.startswith("toggle_perm:"):
+                            if is_admin or has_perm("settings"):
+                                _, target_id, perm = data.split(":")
+                                self._toggle_user_perm(chat_id, target_id, perm, cb.get("message", {}).get("message_id"))
+                            else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
+                        elif data.startswith("edit_user_name:"):
+                            if is_admin or has_perm("settings"):
+                                target_id = data.split(":")[1]
+                                self._waiting_for_user_name = target_id
+                                _send(f"✏️ Send the new name for User <b>{target_id}</b>:", chat_id=chat_id)
+                            else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
+                        elif data.startswith("remove_user:"):
+                            if is_admin or has_perm("settings"):
+                                target_id = data.split(":")[1]
+                                self._remove_user(chat_id, target_id, cb.get("message", {}).get("message_id"))
+                            else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
                             
                         # Answer the callback query so the button stops spinning
                         cb_id = cb.get("id")
@@ -502,6 +521,28 @@ class TelegramListener:
     def _handle_setting_input(self, text: str, chat_id: str):
         key = self._waiting_for_setting
         self._waiting_for_setting = None
+        
+        if key == "PROXY_CONFIG":
+            parts = text.strip().split()
+            if not parts:
+                _send("❌ Invalid format. Edit cancelled.", chat_id=chat_id)
+                return
+            if parts[0].lower() == "none":
+                val = None
+            else:
+                # Expecting: ip:port [username] [password]
+                val = {"server": f"http://{parts[0]}" if not parts[0].startswith("http") else parts[0]}
+                if len(parts) >= 3:
+                    val["username"] = parts[1]
+                    val["password"] = parts[2]
+                    
+            from config.dynamic_settings import set_setting
+            set_setting(key, val)
+            _send(f"✅ <b>Proxy</b> updated! Browser will restart to apply changes.", chat_id=chat_id)
+            self.bot_status["proxy_changed"] = True
+            self._handle_settings_menu(chat_id)
+            return
+            
         try:
             val = int(text)
             from config.dynamic_settings import set_setting
@@ -532,12 +573,16 @@ class TelegramListener:
         next_restart = b_start + b_interval
         next_restart_str = datetime.fromtimestamp(next_restart).strftime("%d.%m.%Y %H:%M:%S")
 
+        current_proxy = get_setting("PROXY_CONFIG", None)
+        proxy_display = current_proxy["server"] if current_proxy and isinstance(current_proxy, dict) else "None"
+
         lines = [
             "⚙️ <b>Bot Settings</b>\n",
             f"• POLL_MIN_SECONDS: {get_setting('POLL_MIN_SECONDS', 60)}",
             f"• POLL_MAX_SECONDS: {get_setting('POLL_MAX_SECONDS', 120)}",
             f"• MAX_NEW_DATES_LISTED: {get_setting('MAX_NEW_DATES_LISTED', 5)}",
-            f"• BROWSER_RESTART_INTERVAL: {get_setting('BROWSER_RESTART_INTERVAL', 3600)}s\n",
+            f"• BROWSER_RESTART_INTERVAL: {get_setting('BROWSER_RESTART_INTERVAL', 3600)}s",
+            f"• PROXY: {proxy_display}\n",
             f"🕐 <b>Last check:</b> {last_poll_str}",
             f"{proxy_icon} <b>Proxy/Session:</b> {proxy_str}",
             f"🔄 <b>Next browser restart:</b> {next_restart_str}\n",
@@ -549,6 +594,7 @@ class TelegramListener:
             [{"text": "⏱️ Edit Poll Max", "callback_data": "edit_setting:POLL_MAX_SECONDS"}],
             [{"text": "📋 Edit Max Dates", "callback_data": "edit_setting:MAX_NEW_DATES_LISTED"}],
             [{"text": "🔄 Edit Restart Interval", "callback_data": "edit_setting:BROWSER_RESTART_INTERVAL"}],
+            [{"text": "🌐 Edit Proxy", "callback_data": "edit_setting:PROXY_CONFIG"}],
             [{"text": "👥 Manage Users", "callback_data": "manage_users"}]
         ]
         
@@ -670,6 +716,12 @@ class TelegramListener:
             self._handle_user_details(chat_id, target_id, edit_msg_id)
 
     def _remove_user(self, chat_id: str, target_id: str, edit_msg_id: Optional[int] = None):
+        if chat_id == target_id:
+            msg = "❌ Siz özünüzü silə bilməzsiniz!"
+            if edit_msg_id: _edit(chat_id, edit_msg_id, msg)
+            else: _send(msg, chat_id=chat_id)
+            return
+            
         from config.dynamic_settings import get_setting, set_setting
         allowed = get_setting("ALLOWED_CHAT_IDS", {})
         if target_id in allowed:

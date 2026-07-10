@@ -122,14 +122,23 @@ class BrowserManager:
             os.makedirs(user_data_dir, exist_ok=True)
 
             # Build proxy config
+            from config.dynamic_settings import get_setting
             from config.settings import PROXY_SERVER, PROXY_USERNAME, PROXY_PASSWORD
-            proxy_config = None
-            if PROXY_SERVER:
-                proxy_config = {"server": PROXY_SERVER}
+            
+            proxy_config = get_setting("PROXY_CONFIG")
+            
+            if not proxy_config and PROXY_SERVER:
+                # Fallback to .env settings
+                proxy_config = {"server": f"http://{PROXY_SERVER}" if not PROXY_SERVER.startswith("http") else PROXY_SERVER}
                 if PROXY_USERNAME:
                     proxy_config["username"] = PROXY_USERNAME
                     proxy_config["password"] = PROXY_PASSWORD
-                log.info("Using proxy: %s", PROXY_SERVER)
+
+            if proxy_config and isinstance(proxy_config, dict):
+                log.info("Using proxy: %s", proxy_config.get("server", "Unknown"))
+            else:
+                proxy_config = None
+                log.info("No proxy configured.")
 
             log.info("Launching Playwright Chromium...")
             ctx = pw.chromium.launch_persistent_context(

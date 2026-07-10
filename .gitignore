@@ -5,3 +5,4 @@ __pycache__/
 monitor_state.json
 ady_monitor.log
 playwright_profile/
+dynamic_settings.json
