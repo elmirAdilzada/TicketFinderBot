@@ -201,11 +201,20 @@ class ADYApiClient:
                 parsed = json.loads(val)
                 if parsed.get("status") in (403, 503):
                     raise CloudflareChallenge(f"Cloudflare challenge detected (HTTP {parsed.get('status')})")
+                
+                # Check for Recaptcha error
+                if parsed.get("status") == 422:
+                    data = parsed.get("data", {})
+                    if data.get("error") and "ecaptcha" in str(data.get("message", "")).lower():
+                        raise RecaptchaError("Recaptcha token rejected by server")
+                        
                 if parsed.get("status") == 200 and "data" in parsed:
                     return parsed["data"]
                 log.warning("Playwright fetch returned non-200 or missing data: %s", parsed)
             return None
         except CloudflareChallenge:
+            raise
+        except RecaptchaError:
             raise
         except Exception as exc:
             log.warning("Playwright fetch error: %s", exc)
@@ -383,3 +392,6 @@ def _txt_to_val(txt: str) -> str:
 
 class CloudflareChallenge(Exception):
     """Raised when Cloudflare blocks the API request."""
+
+class RecaptchaError(Exception):
+    """Raised when the API rejects the ReCaptcha token."""

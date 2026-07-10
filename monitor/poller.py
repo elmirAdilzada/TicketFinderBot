@@ -19,7 +19,7 @@ from typing import Optional
 
 from config.settings import ROUTES
 from config.dynamic_settings import get_setting
-from network.api_client import ADYApiClient, CloudflareChallenge
+from network.api_client import ADYApiClient, CloudflareChallenge, RecaptchaError
 from monitor.state import (
     DateSnapshot,
     load_state,
@@ -54,6 +54,8 @@ def _poll_route_dates(client: ADYApiClient, route: dict) -> Optional[DateSnapsho
     try:
         trip_dates = client.get_trip_dates(from_st, to_st, way)
     except CloudflareChallenge:
+        raise
+    except RecaptchaError:
         raise
     except Exception as exc:
         log.warning("get_trip_dates failed for %s: %s", label, exc)
@@ -190,6 +192,15 @@ def run_monitor() -> None:
                 except Exception as exc:
                     log.error("Route %s failed after CF recovery: %s", label, exc)
                     continue
+            except RecaptchaError:
+                from telegram.bot import notify_recaptcha_error
+                log.warning("Recaptcha error detected on %s! Forcing browser reload.", label)
+                notify_recaptcha_error()
+                try:
+                    browser.reload_page()
+                except Exception as exc:
+                    log.error("Failed to reload browser after Recaptcha error: %s", exc)
+                continue
             except Exception as exc:
                 log.error("Unexpected error polling %s: %s", label, exc)
                 continue

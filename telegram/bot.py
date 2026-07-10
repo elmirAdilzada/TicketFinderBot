@@ -233,6 +233,16 @@ def notify_cloudflare_resolved() -> Optional[int]:
     return _send(text)
 
 
+def notify_recaptcha_error() -> Optional[int]:
+    text = (
+        "⚠️ <b>Recaptcha Error Detected</b>\n\n"
+        "The server rejected our ReCaptcha token.\n"
+        "Reloading browser session automatically to bypass it...\n\n"
+        f"<b>Time:</b> {_detected_now()}"
+    )
+    return _send(text)
+
+
 def notify_startup(routes: list[dict]) -> Optional[int]:
     # Set bot commands in the command palette
     set_bot_commands()
