@@ -232,16 +232,20 @@ class ADYApiClient:
             return []
 
         dates: list[TripDate] = []
-        for _way_key, items in raw["data"].items():
-            if not isinstance(items, list):
-                continue
+        items = raw["data"].get(str(way), [])
+        if isinstance(items, list):
             for item in items:
                 try:
+                    min_amt = float(item.get("min_amount", 0))
+                    # If min_amount is 0 or less, it means there are no tickets for this date
+                    if min_amt <= 0:
+                        continue
+                        
                     dates.append(
                         TripDate(
                             trip_date_val=_txt_to_val(item["trip_date"]),
                             trip_date_txt=item["trip_date"],
-                            min_amount=float(item.get("min_amount", 0)),
+                            min_amount=min_amt,
                             min_coefficient=float(item.get("min_cofficient", 1)),
                         )
                     )
