@@ -149,13 +149,16 @@ def run_monitor() -> None:
     bot_status["browser_start_time"] = time.time()
 
     while True:
-        # Wait until /startfinding is received
-        if not is_finding_event.is_set():
-            log.info("Search is paused. Waiting for /startfinding command...")
-            # Wait with a timeout so we can still handle signals or force polls
-            is_finding_event.wait(timeout=10)
-            if not is_finding_event.is_set():
-                continue
+        if force_poll_event.is_set():
+            log.info("Force poll requested via Telegram!")
+            force_poll_event.clear()
+            forced_poll_cycle = True
+
+        # Wait until /startfinding is received or a forced poll is pending
+        if not is_finding_event.is_set() and not forced_poll_cycle:
+            # Wait with a short timeout to catch force_poll_event quickly
+            is_finding_event.wait(timeout=2)
+            continue
 
         # Check if browser needs an hourly restart or if proxy was changed
         browser_restart_interval = get_setting("BROWSER_RESTART_INTERVAL", 3600)
@@ -284,6 +287,11 @@ def run_monitor() -> None:
             except Exception as exc:
                 log.error("Failed to restart browser: %s", exc)
                 notify_error(f"❌ Browser restart failed: {exc}")
+
+        if not is_finding_event.is_set():
+            # If search is paused, reset forced flag and loop back to the pause check
+            forced_poll_cycle = False
+            continue
 
         # ── Wait for next poll ─────────────────────────────────────────────
         poll_min = get_setting("POLL_MIN_SECONDS", 60)
