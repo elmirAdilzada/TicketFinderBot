@@ -20,15 +20,35 @@ log = logging.getLogger(__name__)
 _TELEGRAM_API = "https://api.telegram.org/bot{token}/sendMessage"
 
 
-def _get_all_chat_ids() -> list[str]:
-    from config.dynamic_settings import get_setting
+def _get_users() -> dict:
+    from config.dynamic_settings import get_setting, set_setting
+    allowed = get_setting("ALLOWED_CHAT_IDS", {})
+    if isinstance(allowed, list):
+        new_allowed = {}
+        for c in allowed:
+            new_allowed[str(c)] = {
+                "name": "Unknown User",
+                "notifications": False,
+                "perms": {
+                    "startfinding": False,
+                    "stopfinding": False,
+                    "check": False,
+                    "settings": False,
+                    "dates": False
+                }
+            }
+        set_setting("ALLOWED_CHAT_IDS", new_allowed)
+        return new_allowed
+    return allowed
+
+def _get_broadcast_chat_ids() -> list[str]:
     chats = set()
     if TELEGRAM_CHAT_ID:
         chats.add(str(TELEGRAM_CHAT_ID))
-    allowed = get_setting("ALLOWED_CHAT_IDS", [])
-    if isinstance(allowed, list):
-        for c in allowed:
-            chats.add(str(c))
+    users = _get_users()
+    for cid, data in users.items():
+        if data.get("notifications", False):
+            chats.add(str(cid))
     return list(chats)
 
 
@@ -45,7 +65,7 @@ def _send(text: str, parse_mode: str = "HTML", reply_markup: Optional[dict] = No
 
     url = _TELEGRAM_API.format(token=TELEGRAM_BOT_TOKEN)
     
-    target_chats = [chat_id] if chat_id else _get_all_chat_ids()
+    target_chats = [chat_id] if chat_id else _get_broadcast_chat_ids()
     last_msg_id = None
 
     for cid in target_chats:
@@ -312,34 +332,48 @@ class TelegramListener:
                         chat_id = str(msg.get("chat", {}).get("id", ""))
 
                         admin_chat = str(TELEGRAM_CHAT_ID)
-                        is_authorized = (chat_id == admin_chat)
+                        is_admin = (chat_id == admin_chat)
+                        users = _get_users()
+                        user_data = users.get(chat_id, {})
+
+                        def has_perm(cmd_name: str) -> bool:
+                            if is_admin: return True
+                            if chat_id in users:
+                                return user_data.get("perms", {}).get(cmd_name, False)
+                            return False
 
                         if text.lower() == "/start":
                             _send(f"👋 <b>Welcome!</b>\nYour Chat ID is: <code>{chat_id}</code>\nPlease ask the admin to approve this ID.", chat_id=chat_id)
                             continue
 
-                        if not is_authorized:
-                            # Ignore other messages from unauthorized users (or broadcast-only users)
-                            continue
-
-                        if text.lower().startswith("/addchat ") and chat_id == admin_chat:
+                        if text.lower().startswith("/addchat ") and is_admin:
                             new_chat = text.split(" ")[1].strip()
                             from config.dynamic_settings import get_setting, set_setting
-                            allowed = get_setting("ALLOWED_CHAT_IDS", [])
+                            allowed = get_setting("ALLOWED_CHAT_IDS", {})
                             if new_chat not in allowed:
-                                allowed.append(new_chat)
+                                allowed[new_chat] = {
+                                    "name": "Unknown User",
+                                    "notifications": False,
+                                    "perms": {
+                                        "startfinding": False,
+                                        "stopfinding": False,
+                                        "check": False,
+                                        "settings": False,
+                                        "dates": False
+                                    }
+                                }
                                 set_setting("ALLOWED_CHAT_IDS", allowed)
                                 _send(f"✅ Chat ID {new_chat} has been added.", chat_id=chat_id)
                             else:
                                 _send(f"ℹ️ Chat ID {new_chat} is already authorized.", chat_id=chat_id)
                             continue
 
-                        if text.lower().startswith("/removechat ") and chat_id == admin_chat:
+                        if text.lower().startswith("/removechat ") and is_admin:
                             old_chat = text.split(" ")[1].strip()
                             from config.dynamic_settings import get_setting, set_setting
-                            allowed = get_setting("ALLOWED_CHAT_IDS", [])
+                            allowed = get_setting("ALLOWED_CHAT_IDS", {})
                             if old_chat in allowed:
-                                allowed.remove(old_chat)
+                                del allowed[old_chat]
                                 set_setting("ALLOWED_CHAT_IDS", allowed)
                                 _send(f"✅ Chat ID {old_chat} has been removed.", chat_id=chat_id)
                             else:
@@ -347,28 +381,37 @@ class TelegramListener:
                             continue
 
                         if self._date_pattern.match(text):
-                            self._handle_date_query(text, chat_id)
+                            if has_perm("dates"):
+                                self._handle_date_query(text, chat_id)
                         elif text.lower() in ("/dates", "/status"):
-                            self._handle_status_query(chat_id)
+                            if has_perm("dates"):
+                                self._handle_status_query(chat_id)
                         elif text.lower() == "/check":
-                            _send("🔄 Checking... Please wait.", chat_id=chat_id)
-                            if self.force_poll_event:
-                                self.force_poll_event.set()
-                        elif text.lower() == "/startfinding":
-                            if self.is_finding_event:
-                                self.is_finding_event.set()
-                                _send("▶️ <b>Search started!</b>\nThe bot will now automatically search for tickets.", chat_id=chat_id)
+                            if has_perm("check"):
+                                _send("🔄 Checking... Please wait.", chat_id=chat_id)
                                 if self.force_poll_event:
                                     self.force_poll_event.set()
+                        elif text.lower() == "/startfinding":
+                            if has_perm("startfinding"):
+                                if self.is_finding_event:
+                                    self.is_finding_event.set()
+                                    _send("▶️ <b>Search started!</b>\nThe bot will now automatically search for tickets.", chat_id=chat_id)
+                                    if self.force_poll_event:
+                                        self.force_poll_event.set()
                         elif text.lower() == "/stopfinding":
-                            if self.is_finding_event:
-                                self.is_finding_event.clear()
-                                _send("⏸️ <b>Search paused!</b>\nYou can restart it by sending /startfinding.", chat_id=chat_id)
+                            if has_perm("stopfinding"):
+                                if self.is_finding_event:
+                                    self.is_finding_event.clear()
+                                    _send("⏸️ <b>Search paused!</b>\nYou can restart it by sending /startfinding.", chat_id=chat_id)
                         elif text.lower() == "/settings":
-                            self._handle_settings_menu(chat_id)
-                        elif self._waiting_for_setting:
-                            # User is typing a value for a setting
+                            if has_perm("settings"):
+                                self._handle_settings_menu(chat_id)
+                        elif text.lower() == "/users" and is_admin:
+                            self._handle_users_menu(chat_id)
+                        elif getattr(self, '_waiting_for_setting', None):
                             self._handle_setting_input(text, chat_id)
+                        elif getattr(self, '_waiting_for_user_name', None):
+                            self._handle_user_name_input(text, chat_id)
                             
                     elif "callback_query" in update:
                         cb = update["callback_query"]
@@ -376,19 +419,40 @@ class TelegramListener:
                         chat_id = str(cb.get("message", {}).get("chat", {}).get("id", ""))
                         
                         admin_chat = str(TELEGRAM_CHAT_ID)
-                        is_authorized = (chat_id == admin_chat)
-                        
-                        # Only respond to authorized chats (admin only)
-                        if not is_authorized:
-                            continue
+                        is_admin = (chat_id == admin_chat)
+                        users = _get_users()
+                        user_data = users.get(chat_id, {})
+
+                        def has_perm(cmd_name: str) -> bool:
+                            if is_admin: return True
+                            if chat_id in users:
+                                return user_data.get("perms", {}).get(cmd_name, False)
+                            return False
                             
                         if data.startswith("check_seat:"):
-                            date_txt = data.split("check_seat:")[1]
-                            self._handle_date_query(date_txt, chat_id)
+                            if has_perm("dates"):
+                                date_txt = data.split("check_seat:")[1]
+                                self._handle_date_query(date_txt, chat_id)
                         elif data.startswith("edit_setting:"):
-                            setting_key = data.split("edit_setting:")[1]
-                            self._waiting_for_setting = setting_key
-                            _send(f"✏️ Send the new value for <b>{setting_key}</b>:", chat_id=chat_id)
+                            if has_perm("settings"):
+                                setting_key = data.split("edit_setting:")[1]
+                                self._waiting_for_setting = setting_key
+                                _send(f"✏️ Send the new value for <b>{setting_key}</b>:", chat_id=chat_id)
+                        elif data == "manage_users" and is_admin:
+                            self._handle_users_menu(chat_id)
+                        elif data.startswith("user_details:") and is_admin:
+                            target_id = data.split(":")[1]
+                            self._handle_user_details(chat_id, target_id)
+                        elif data.startswith("toggle_perm:") and is_admin:
+                            _, target_id, perm = data.split(":")
+                            self._toggle_user_perm(chat_id, target_id, perm)
+                        elif data.startswith("edit_user_name:") and is_admin:
+                            target_id = data.split(":")[1]
+                            self._waiting_for_user_name = target_id
+                            _send(f"✏️ Send the new name for User <b>{target_id}</b>:", chat_id=chat_id)
+                        elif data.startswith("remove_user:") and is_admin:
+                            target_id = data.split(":")[1]
+                            self._remove_user(chat_id, target_id)
                             
                         # Answer the callback query so the button stops spinning
                         cb_id = cb.get("id")
@@ -449,7 +513,8 @@ class TelegramListener:
             [{"text": "⏱️ Edit Poll Min", "callback_data": "edit_setting:POLL_MIN_SECONDS"}],
             [{"text": "⏱️ Edit Poll Max", "callback_data": "edit_setting:POLL_MAX_SECONDS"}],
             [{"text": "📋 Edit Max Dates", "callback_data": "edit_setting:MAX_NEW_DATES_LISTED"}],
-            [{"text": "🔄 Edit Restart Interval", "callback_data": "edit_setting:BROWSER_RESTART_INTERVAL"}]
+            [{"text": "🔄 Edit Restart Interval", "callback_data": "edit_setting:BROWSER_RESTART_INTERVAL"}],
+            [{"text": "👥 Manage Users", "callback_data": "manage_users"}]
         ]
         
         _send("\n".join(lines), reply_markup={"inline_keyboard": inline_keyboard}, chat_id=chat_id)
@@ -493,3 +558,91 @@ class TelegramListener:
             f"Example: <code>{datetime.now().strftime('%d-%m-%Y')}</code>\n\n"
             "The monitor automatically notifies you when new travel dates appear.", chat_id=chat_id
         )
+
+    def _handle_users_menu(self, chat_id: str):
+        users = _get_users()
+        if not users:
+            _send("👥 <b>No users have been added yet.</b>\nThey can be added via /addchat.", chat_id=chat_id)
+            return
+            
+        lines = ["👥 <b>Manage Users</b>\n", "Select a user to manage their permissions:"]
+        inline_keyboard = []
+        for cid, udata in users.items():
+            name = udata.get("name", "Unknown User")
+            inline_keyboard.append([{"text": f"👤 {name} ({cid})", "callback_data": f"user_details:{cid}"}])
+            
+        _send("\n".join(lines), reply_markup={"inline_keyboard": inline_keyboard}, chat_id=chat_id)
+
+    def _handle_user_details(self, chat_id: str, target_id: str):
+        users = _get_users()
+        if target_id not in users:
+            _send(f"❌ User <b>{target_id}</b> not found.", chat_id=chat_id)
+            return
+            
+        udata = users[target_id]
+        name = udata.get("name", "Unknown User")
+        perms = udata.get("perms", {})
+        notif = udata.get("notifications", False)
+        
+        lines = [
+            f"👤 <b>User Details</b>",
+            f"<b>Name:</b> {name}",
+            f"<b>Chat ID:</b> {target_id}\n",
+            "Select an option to toggle permission:"
+        ]
+        
+        def btn(label, key, is_notif=False):
+            state = notif if is_notif else perms.get(key, False)
+            icon = "🟢 ON" if state else "🔴 OFF"
+            return {"text": f"{label}: {icon}", "callback_data": f"toggle_perm:{target_id}:{key}"}
+
+        inline_keyboard = [
+            [{"text": "✏️ Edit Name", "callback_data": f"edit_user_name:{target_id}"}],
+            [btn("🔔 Notifications", "notifications", is_notif=True)],
+            [btn("▶️ startfinding", "startfinding"), btn("⏸️ stopfinding", "stopfinding")],
+            [btn("🔄 check", "check"), btn("⚙️ settings", "settings")],
+            [btn("📅 dates", "dates")],
+            [{"text": "❌ Remove User", "callback_data": f"remove_user:{target_id}"}],
+            [{"text": "🔙 Back to Users", "callback_data": "manage_users"}]
+        ]
+        
+        _send("\n".join(lines), reply_markup={"inline_keyboard": inline_keyboard}, chat_id=chat_id)
+
+    def _toggle_user_perm(self, chat_id: str, target_id: str, perm: str):
+        from config.dynamic_settings import get_setting, set_setting
+        allowed = get_setting("ALLOWED_CHAT_IDS", {})
+        if target_id in allowed:
+            if perm == "notifications":
+                current = allowed[target_id].get("notifications", False)
+                allowed[target_id]["notifications"] = not current
+            else:
+                if "perms" not in allowed[target_id]:
+                    allowed[target_id]["perms"] = {}
+                current = allowed[target_id]["perms"].get(perm, False)
+                allowed[target_id]["perms"][perm] = not current
+            set_setting("ALLOWED_CHAT_IDS", allowed)
+            # Refresh UI
+            self._handle_user_details(chat_id, target_id)
+
+    def _remove_user(self, chat_id: str, target_id: str):
+        from config.dynamic_settings import get_setting, set_setting
+        allowed = get_setting("ALLOWED_CHAT_IDS", {})
+        if target_id in allowed:
+            del allowed[target_id]
+            set_setting("ALLOWED_CHAT_IDS", allowed)
+            _send(f"✅ User <b>{target_id}</b> has been removed.", chat_id=chat_id)
+            self._handle_users_menu(chat_id)
+            
+    def _handle_user_name_input(self, text: str, chat_id: str):
+        target_id = getattr(self, '_waiting_for_user_name', None)
+        self._waiting_for_user_name = None
+        if not target_id:
+            return
+            
+        from config.dynamic_settings import get_setting, set_setting
+        allowed = get_setting("ALLOWED_CHAT_IDS", {})
+        if target_id in allowed:
+            allowed[target_id]["name"] = text.strip()
+            set_setting("ALLOWED_CHAT_IDS", allowed)
+            _send(f"✅ Name for <b>{target_id}</b> updated to <b>{text.strip()}</b>!", chat_id=chat_id)
+            self._handle_user_details(chat_id, target_id)
