@@ -4,21 +4,73 @@
     "from_station": 232,
     "to_station": 170,
     "dates": {
-      "2026-06-30": {
-        "trip_date_txt": "30-06-2026",
-        "min_amount": 166.68
+      "2026-07-11": {
+        "trip_date_txt": "11-07-2026",
+        "min_amount": 113.75
       },
-      "2026-07-21": {
-        "trip_date_txt": "21-07-2026",
-        "min_amount": 195.15
+      "2026-07-18": {
+        "trip_date_txt": "18-07-2026",
+        "min_amount": 238.44
       },
-      "2026-07-22": {
-        "trip_date_txt": "22-07-2026",
-        "min_amount": 195.15
+      "2026-07-19": {
+        "trip_date_txt": "19-07-2026",
+        "min_amount": 95.48
+      },
+      "2026-07-23": {
+        "trip_date_txt": "23-07-2026",
+        "min_amount": 78.04
+      },
+      "2026-07-24": {
+        "trip_date_txt": "24-07-2026",
+        "min_amount": 86.34
+      },
+      "2026-07-25": {
+        "trip_date_txt": "25-07-2026",
+        "min_amount": 86.34
+      },
+      "2026-07-26": {
+        "trip_date_txt": "26-07-2026",
+        "min_amount": 86.34
+      },
+      "2026-07-27": {
+        "trip_date_txt": "27-07-2026",
+        "min_amount": 78.04
+      },
+      "2026-07-28": {
+        "trip_date_txt": "28-07-2026",
+        "min_amount": 78.04
+      },
+      "2026-07-29": {
+        "trip_date_txt": "29-07-2026",
+        "min_amount": 78.04
       },
       "2026-07-30": {
         "trip_date_txt": "30-07-2026",
-        "min_amount": 175.14
+        "min_amount": 78.04
+      },
+      "2026-07-31": {
+        "trip_date_txt": "31-07-2026",
+        "min_amount": 86.34
+      },
+      "2026-08-01": {
+        "trip_date_txt": "01-08-2026",
+        "min_amount": 86.34
+      },
+      "2026-08-02": {
+        "trip_date_txt": "02-08-2026",
+        "min_amount": 97.81
+      },
+      "2026-08-06": {
+        "trip_date_txt": "06-08-2026",
+        "min_amount": 176.07
+      },
+      "2026-08-07": {
+        "trip_date_txt": "07-08-2026",
+        "min_amount": 194.18
+      },
+      "2026-08-09": {
+        "trip_date_txt": "09-08-2026",
+        "min_amount": 77.21
       }
     }
   },
@@ -26,6 +78,138 @@
     "label": "Tbilisi \u2192 Baku",
     "from_station": 170,
     "to_station": 232,
-    "dates": {}
+    "dates": {
+      "2026-07-15": {
+        "trip_date_txt": "15-07-2026",
+        "min_amount": 86.34
+      }
+    }
+  },
+  "Anomaly Check": {
+    "label": "Anomaly Check",
+    "from_station": 232,
+    "to_station": 311,
+    "dates": {
+      "2026-07-11": {
+        "trip_date_txt": "11-07-2026",
+        "min_amount": 18.1
+      },
+      "2026-07-12": {
+        "trip_date_txt": "12-07-2026",
+        "min_amount": 18.1
+      },
+      "2026-07-13": {
+        "trip_date_txt": "13-07-2026",
+        "min_amount": 16.4
+      },
+      "2026-07-14": {
+        "trip_date_txt": "14-07-2026",
+        "min_amount": 16.4
+      },
+      "2026-07-15": {
+        "trip_date_txt": "15-07-2026",
+        "min_amount": 16.4
+      },
+      "2026-07-16": {
+        "trip_date_txt": "16-07-2026",
+        "min_amount": 16.4
+      },
+      "2026-07-17": {
+        "trip_date_txt": "17-07-2026",
+        "min_amount": 18.1
+      },
+      "2026-07-18": {
+        "trip_date_txt": "18-07-2026",
+        "min_amount": 18.1
+      },
+      "2026-07-19": {
+        "trip_date_txt": "19-07-2026",
+        "min_amount": 18.1
+      },
+      "2026-07-20": {
+        "trip_date_txt": "20-07-2026",
+        "min_amount": 16.4
+      },
+      "2026-07-21": {
+        "trip_date_txt": "21-07-2026",
+        "min_amount": 16.4
+      },
+      "2026-07-22": {
+        "trip_date_txt": "22-07-2026",
+        "min_amount": 16.4
+      },
+      "2026-07-23": {
+        "trip_date_txt": "23-07-2026",
+        "min_amount": 16.4
+      },
+      "2026-07-24": {
+        "trip_date_txt": "24-07-2026",
+        "min_amount": 18.1
+      },
+      "2026-07-25": {
+        "trip_date_txt": "25-07-2026",
+        "min_amount": 18.1
+      },
+      "2026-07-26": {
+        "trip_date_txt": "26-07-2026",
+        "min_amount": 18.1
+      },
+      "2026-07-27": {
+        "trip_date_txt": "27-07-2026",
+        "min_amount": 16.4
+      },
+      "2026-07-28": {
+        "trip_date_txt": "28-07-2026",
+        "min_amount": 16.4
+      },
+      "2026-07-29": {
+        "trip_date_txt": "29-07-2026",
+        "min_amount": 16.4
+      },
+      "2026-07-30": {
+        "trip_date_txt": "30-07-2026",
+        "min_amount": 16.4
+      },
+      "2026-07-31": {
+        "trip_date_txt": "31-07-2026",
+        "min_amount": 18.1
+      },
+      "2026-08-01": {
+        "trip_date_txt": "01-08-2026",
+        "min_amount": 18.1
+      },
+      "2026-08-02": {
+        "trip_date_txt": "02-08-2026",
+        "min_amount": 18.1
+      },
+      "2026-08-03": {
+        "trip_date_txt": "03-08-2026",
+        "min_amount": 16.4
+      },
+      "2026-08-04": {
+        "trip_date_txt": "04-08-2026",
+        "min_amount": 16.4
+      },
+      "2026-08-05": {
+        "trip_date_txt": "05-08-2026",
+        "min_amount": 14.8
+      },
+      "2026-08-06": {
+        "trip_date_txt": "06-08-2026",
+        "min_amount": 14.8
+      },
+      "2026-08-07": {
+        "trip_date_txt": "07-08-2026",
+        "min_amount": 16.3
+      },
+      "2026-08-08": {
+        "trip_date_txt": "08-08-2026",
+        "min_amount": 16.3
+      },
+      "2026-08-09": {
+        "trip_date_txt": "09-08-2026",
+        "min_amount": 16.3
+      }
+    }
   }
 }

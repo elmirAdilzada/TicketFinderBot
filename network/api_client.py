@@ -147,32 +147,26 @@ class ADYApiClient:
 
         js_code = f'''
         async () => {{
-            // Wait up to 10s for grecaptcha to become available
-            const waitForRecaptcha = () => new Promise((resolve, reject) => {{
-                let attempts = 0;
-                const check = () => {{
-                    if (typeof grecaptcha !== 'undefined' && grecaptcha.ready) {{
-                        resolve();
-                    }} else if (attempts++ > 50) {{
-                        reject(new Error("grecaptcha not available after 10s"));
-                    }} else {{
-                        setTimeout(check, 200);
-                    }}
-                }};
-                check();
+            const getToken = () => new Promise((resolve) => {{
+                if (typeof grecaptcha === 'undefined') {{
+                    return resolve("");
+                }}
+                
+                try {{
+                    grecaptcha.ready(() => {{
+                        grecaptcha.execute('6LfpFmsbAAAAAKigEk1t8PTNaLcUuNMAd5WSF_uq', {{action: 'submit'}})
+                            .then(resolve)
+                            .catch(() => resolve(""));
+                    }});
+                    // Fallback to empty token if Google hangs
+                    setTimeout(() => resolve(""), 5000);
+                }} catch(e) {{
+                    resolve("");
+                }}
             }});
 
             try {{
-                await waitForRecaptcha();
-
-                const token = await new Promise((resolve, reject) => {{
-                    grecaptcha.ready(() => {{
-                        grecaptcha.execute('6LecJSYtAAAAAMSGKGKhA72oiCfAWr8EoAUzEMgj', {{action: 'submit'}})
-                            .then(resolve)
-                            .catch(reject);
-                    }});
-                    setTimeout(() => reject(new Error("grecaptcha.execute timeout")), 10000);
-                }});
+                const token = await getToken();
 
                 const p = {json.dumps(payload)};
                 p.g_token = token;
@@ -213,6 +207,10 @@ class ADYApiClient:
                     data = parsed.get("data", {})
                     if data.get("error") and "ecaptcha" in str(data.get("message", "")).lower():
                         raise RecaptchaError("Recaptcha token rejected by server")
+                
+                # Check for Recaptcha timeout
+                if parsed.get("status") == 500 and "grecaptcha.execute timeout" in str(parsed.get("error", "")):
+                    raise RecaptchaError("grecaptcha.execute timeout")
                         
                 if parsed.get("status") == 200 and "data" in parsed:
                     return parsed["data"]

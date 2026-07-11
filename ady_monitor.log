@@ -2961,3 +2961,507 @@ NameError: name 'threading' is not defined. Did you forget to import 'threading'
 2026-06-30 20:08:32  INFO      monitor.poller: Date changes for Tbilisi → Baku: +0 / -4 (forced=False)
 2026-06-30 20:08:32  INFO      monitor.poller: Poll cycle complete. Next poll in 2 min (around 20:10:11).
 2026-06-30 20:08:41  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 08:22:40  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 08:22:40  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 08:22:43  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 08:22:44  WARNING   telegram.bot: Telegram HTTP 401: {"ok":false,"error_code":401,"description":"Unauthorized"}
+2026-07-11 08:22:44  WARNING   telegram.bot: Telegram HTTP 401: {"ok":false,"error_code":401,"description":"Unauthorized"}
+2026-07-11 08:22:44  INFO      browser.session: Starting BrowserManager...
+2026-07-11 08:22:46  INFO      browser.session: Using proxy: http://198.105.121.200:6462
+2026-07-11 08:22:46  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 08:22:48  INFO      browser.session: Resource blocking enabled (images/media/fonts/css blocked)
+2026-07-11 08:22:48  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 08:22:51  INFO      browser.session: Cloudflare cleared successfully!
+2026-07-11 08:22:51  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-07-11 08:23:21  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 08:24:10  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 08:24:10  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 08:24:11  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 08:24:12  INFO      browser.session: Starting BrowserManager...
+2026-07-11 08:24:12  INFO      browser.session: Using proxy: http://198.105.121.200:6462
+2026-07-11 08:24:12  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 08:24:12  INFO      browser.session: Resource blocking enabled (images/media/fonts/css blocked)
+2026-07-11 08:24:12  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 08:24:16  INFO      browser.session: Cloudflare cleared successfully!
+2026-07-11 08:24:16  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-07-11 08:24:28  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:24:38  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:24:38  WARNING   monitor.poller: get_trip_dates failed for Baku → Tbilisi: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:24:38  WARNING   monitor.poller: Poll returned None for Baku → Tbilisi – skipping
+2026-07-11 08:24:48  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:24:48  WARNING   monitor.poller: get_trip_dates failed for Tbilisi → Baku: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:24:48  WARNING   monitor.poller: Poll returned None for Tbilisi → Baku – skipping
+2026-07-11 08:24:55  INFO      config.dynamic_settings: Dynamic setting PROXY_CONFIG updated to none
+2026-07-11 08:24:58  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:24:58  WARNING   monitor.poller: get_trip_dates failed for Anomaly Check: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:24:58  WARNING   monitor.poller: Poll returned None for Anomaly Check – skipping
+2026-07-11 08:24:58  INFO      monitor.poller: Poll cycle complete. Next poll in 2 min (around 08:26:43).
+2026-07-11 08:24:58  INFO      monitor.poller: Force poll requested via Telegram!
+2026-07-11 08:24:58  INFO      monitor.poller: Proxy change detected! Restarting browser immediately...
+2026-07-11 08:24:58  INFO      browser.session: Stopping BrowserManager...
+2026-07-11 08:25:00  INFO      browser.session: Starting BrowserManager...
+2026-07-11 08:25:01  INFO      browser.session: No proxy configured.
+2026-07-11 08:25:01  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 08:25:01  INFO      browser.session: Resource blocking enabled (images/media/fonts/css blocked)
+2026-07-11 08:25:01  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 08:25:03  INFO      browser.session: Cloudflare cleared successfully!
+2026-07-11 08:25:03  INFO      monitor.poller: Browser restart completed successfully.
+2026-07-11 08:25:03  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:25:13  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:25:13  WARNING   monitor.poller: get_trip_dates failed for Baku → Tbilisi: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:25:13  WARNING   monitor.poller: Poll returned None for Baku → Tbilisi – skipping
+2026-07-11 08:25:23  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:25:23  WARNING   monitor.poller: get_trip_dates failed for Tbilisi → Baku: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:25:23  WARNING   monitor.poller: Poll returned None for Tbilisi → Baku – skipping
+2026-07-11 08:25:33  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:25:33  WARNING   monitor.poller: get_trip_dates failed for Anomaly Check: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:25:33  WARNING   monitor.poller: Poll returned None for Anomaly Check – skipping
+2026-07-11 08:25:33  INFO      monitor.poller: Poll cycle complete. Next poll in 1 min (around 08:26:41).
+2026-07-11 08:26:41  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:26:51  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:26:51  WARNING   monitor.poller: get_trip_dates failed for Baku → Tbilisi: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:26:51  WARNING   monitor.poller: Poll returned None for Baku → Tbilisi – skipping
+2026-07-11 08:27:01  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:27:01  WARNING   monitor.poller: get_trip_dates failed for Tbilisi → Baku: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:27:01  WARNING   monitor.poller: Poll returned None for Tbilisi → Baku – skipping
+2026-07-11 08:27:11  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:27:11  WARNING   monitor.poller: get_trip_dates failed for Anomaly Check: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:27:11  WARNING   monitor.poller: Poll returned None for Anomaly Check – skipping
+2026-07-11 08:27:11  INFO      monitor.poller: Poll cycle complete. Next poll in 1 min (around 08:28:23).
+2026-07-11 08:28:23  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:28:33  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:28:33  WARNING   monitor.poller: get_trip_dates failed for Baku → Tbilisi: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:28:33  WARNING   monitor.poller: Poll returned None for Baku → Tbilisi – skipping
+2026-07-11 08:28:43  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:28:43  WARNING   monitor.poller: get_trip_dates failed for Tbilisi → Baku: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:28:43  WARNING   monitor.poller: Poll returned None for Tbilisi → Baku – skipping
+2026-07-11 08:28:53  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:28:53  WARNING   monitor.poller: get_trip_dates failed for Anomaly Check: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:28:53  WARNING   monitor.poller: Poll returned None for Anomaly Check – skipping
+2026-07-11 08:28:53  INFO      monitor.poller: Poll cycle complete. Next poll in 1 min (around 08:30:17).
+2026-07-11 08:30:17  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:30:27  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:30:27  WARNING   monitor.poller: get_trip_dates failed for Baku → Tbilisi: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:30:27  WARNING   monitor.poller: Poll returned None for Baku → Tbilisi – skipping
+2026-07-11 08:30:37  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:30:37  WARNING   monitor.poller: get_trip_dates failed for Tbilisi → Baku: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:30:37  WARNING   monitor.poller: Poll returned None for Tbilisi → Baku – skipping
+2026-07-11 08:30:47  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:30:47  WARNING   monitor.poller: get_trip_dates failed for Anomaly Check: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:30:47  WARNING   monitor.poller: Poll returned None for Anomaly Check – skipping
+2026-07-11 08:30:48  INFO      monitor.poller: Poll cycle complete. Next poll in 1 min (around 08:31:54).
+2026-07-11 08:31:54  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:32:04  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:32:04  WARNING   monitor.poller: get_trip_dates failed for Baku → Tbilisi: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:32:04  WARNING   monitor.poller: Poll returned None for Baku → Tbilisi – skipping
+2026-07-11 08:32:14  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:32:14  WARNING   monitor.poller: get_trip_dates failed for Tbilisi → Baku: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:32:14  WARNING   monitor.poller: Poll returned None for Tbilisi → Baku – skipping
+2026-07-11 08:32:24  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:32:24  WARNING   monitor.poller: get_trip_dates failed for Anomaly Check: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:32:24  WARNING   monitor.poller: Poll returned None for Anomaly Check – skipping
+2026-07-11 08:32:24  INFO      monitor.poller: Poll cycle complete. Next poll in 1 min (around 08:33:46).
+2026-07-11 08:33:07  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 08:33:09  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 08:33:09  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 08:33:09  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 08:33:10  INFO      browser.session: Starting BrowserManager...
+2026-07-11 08:33:11  INFO      browser.session: No proxy configured.
+2026-07-11 08:33:11  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 08:33:11  INFO      browser.session: Resource blocking enabled (images/media/fonts/css blocked)
+2026-07-11 08:33:11  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 08:33:13  INFO      browser.session: Cloudflare cleared successfully!
+2026-07-11 08:33:13  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-07-11 08:33:30  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:33:50  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:33:50  WARNING   monitor.poller: get_trip_dates failed for Baku → Tbilisi: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:33:50  WARNING   monitor.poller: Poll returned None for Baku → Tbilisi – skipping
+2026-07-11 08:33:52  WARNING   network.api_client: Playwright fetch error: Page.evaluate: Execution context was destroyed, most likely because of a navigation.
+2026-07-11 08:33:52  WARNING   monitor.poller: get_trip_dates failed for Tbilisi → Baku: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:33:52  WARNING   monitor.poller: Poll returned None for Tbilisi → Baku – skipping
+2026-07-11 08:34:12  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:34:12  WARNING   monitor.poller: get_trip_dates failed for Anomaly Check: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:34:12  WARNING   monitor.poller: Poll returned None for Anomaly Check – skipping
+2026-07-11 08:34:12  INFO      monitor.poller: Poll cycle complete. Next poll in 2 min (around 08:35:47).
+2026-07-11 08:34:12  INFO      monitor.poller: Force poll requested via Telegram!
+2026-07-11 08:34:12  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:34:32  WARNING   network.api_client: Playwright fetch returned non-200 or missing data: {'status': 500, 'error': 'Error: grecaptcha.execute timeout'}
+2026-07-11 08:34:32  WARNING   monitor.poller: get_trip_dates failed for Baku → Tbilisi: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:34:32  WARNING   monitor.poller: Poll returned None for Baku → Tbilisi – skipping
+2026-07-11 08:34:50  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 08:34:52  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 08:34:52  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 08:34:53  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 08:34:54  INFO      browser.session: Starting BrowserManager...
+2026-07-11 08:34:54  INFO      browser.session: No proxy configured.
+2026-07-11 08:34:54  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 08:34:54  INFO      browser.session: Resource blocking enabled (images/media/fonts/css blocked)
+2026-07-11 08:34:54  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 08:34:56  INFO      browser.session: Cloudflare cleared successfully!
+2026-07-11 08:34:56  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-07-11 08:35:43  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 08:35:46  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 08:35:46  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 08:35:47  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 08:35:48  INFO      browser.session: Starting BrowserManager...
+2026-07-11 08:35:48  INFO      browser.session: No proxy configured.
+2026-07-11 08:35:48  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 08:35:49  INFO      browser.session: Resource blocking enabled (images/media/fonts/css blocked)
+2026-07-11 08:35:49  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 08:35:50  INFO      browser.session: Cloudflare cleared successfully!
+2026-07-11 08:35:50  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-07-11 08:36:14  INFO      monitor.poller: Force poll requested via Telegram!
+2026-07-11 08:36:14  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:36:34  WARNING   monitor.poller: Recaptcha error detected on Baku → Tbilisi! Forcing browser reload.
+2026-07-11 08:36:56  WARNING   monitor.poller: Recaptcha error detected on Tbilisi → Baku! Forcing browser reload.
+2026-07-11 08:37:19  WARNING   monitor.poller: Recaptcha error detected on Anomaly Check! Forcing browser reload.
+2026-07-11 08:38:11  INFO      monitor.poller: Force poll requested via Telegram!
+2026-07-11 08:38:11  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:38:31  WARNING   monitor.poller: Recaptcha error detected on Baku → Tbilisi! Forcing browser reload.
+2026-07-11 08:38:46  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 08:38:48  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 08:38:48  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 08:38:48  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 08:38:49  INFO      browser.session: Starting BrowserManager...
+2026-07-11 08:38:49  INFO      browser.session: No proxy configured.
+2026-07-11 08:38:49  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 08:38:50  INFO      browser.session: Resource blocking enabled (images/media/fonts/css blocked)
+2026-07-11 08:38:50  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 08:38:51  INFO      browser.session: Cloudflare cleared successfully!
+2026-07-11 08:38:51  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-07-11 08:39:28  INFO      monitor.poller: Force poll requested via Telegram!
+2026-07-11 08:39:28  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:39:48  WARNING   monitor.poller: Recaptcha error detected on Baku → Tbilisi! Forcing browser reload.
+2026-07-11 08:40:00  WARNING   network.api_client: Playwright fetch error: Page.evaluate: Execution context was destroyed, most likely because of a navigation.
+2026-07-11 08:40:00  WARNING   monitor.poller: get_trip_dates failed for Tbilisi → Baku: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:40:00  WARNING   monitor.poller: Poll returned None for Tbilisi → Baku – skipping
+2026-07-11 08:40:03  WARNING   network.api_client: Playwright fetch error: Page.evaluate: Target page, context or browser has been closed
+2026-07-11 08:40:03  WARNING   monitor.poller: get_trip_dates failed for Anomaly Check: get_trip_dates CDP fetch failed or timed out
+2026-07-11 08:40:03  WARNING   monitor.poller: Poll returned None for Anomaly Check – skipping
+2026-07-11 08:40:06  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 08:40:16  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 08:40:16  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 08:40:17  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 08:40:18  INFO      browser.session: Starting BrowserManager...
+2026-07-11 08:40:18  INFO      browser.session: No proxy configured.
+2026-07-11 08:40:18  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 08:40:18  INFO      browser.session: Resource blocking enabled (images/media/fonts/css blocked)
+2026-07-11 08:40:18  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 08:40:20  INFO      browser.session: Cloudflare cleared successfully!
+2026-07-11 08:40:20  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-07-11 08:40:21  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:40:41  WARNING   monitor.poller: Recaptcha error detected on Baku → Tbilisi! Forcing browser reload.
+2026-07-11 08:41:04  WARNING   monitor.poller: Recaptcha error detected on Tbilisi → Baku! Forcing browser reload.
+2026-07-11 08:41:27  WARNING   monitor.poller: Recaptcha error detected on Anomaly Check! Forcing browser reload.
+2026-07-11 08:41:29  INFO      monitor.poller: Poll cycle complete. Next poll in 1 min (around 08:42:49).
+2026-07-11 08:41:29  INFO      monitor.poller: Force poll requested via Telegram!
+2026-07-11 08:41:29  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:41:42  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 08:41:45  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 08:41:45  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 08:41:45  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 08:41:47  INFO      browser.session: Starting BrowserManager...
+2026-07-11 08:41:47  INFO      browser.session: No proxy configured.
+2026-07-11 08:41:47  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 08:41:47  INFO      browser.session: Resource blocking disabled. Loading full page to avoid bot detection.
+2026-07-11 08:41:47  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 08:41:49  INFO      browser.session: Cloudflare cleared successfully!
+2026-07-11 08:41:49  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-07-11 08:42:13  INFO      monitor.poller: Force poll requested via Telegram!
+2026-07-11 08:42:13  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:42:33  WARNING   monitor.poller: Recaptcha error detected on Baku → Tbilisi! Forcing browser reload.
+2026-07-11 08:42:56  WARNING   monitor.poller: Recaptcha error detected on Tbilisi → Baku! Forcing browser reload.
+2026-07-11 08:43:18  WARNING   monitor.poller: Recaptcha error detected on Anomaly Check! Forcing browser reload.
+2026-07-11 08:43:40  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 08:43:42  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 08:43:42  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 08:43:42  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 08:43:43  INFO      browser.session: Starting BrowserManager...
+2026-07-11 08:43:44  INFO      browser.session: No proxy configured.
+2026-07-11 08:43:44  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 08:43:44  INFO      browser.session: Resource blocking disabled. Loading full page to avoid bot detection.
+2026-07-11 08:43:44  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 08:43:46  INFO      browser.session: Cloudflare cleared successfully!
+2026-07-11 08:43:46  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-07-11 08:43:56  INFO      monitor.poller: Force poll requested via Telegram!
+2026-07-11 08:43:56  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:44:01  WARNING   monitor.poller: Recaptcha error detected on Baku → Tbilisi! Forcing browser reload.
+2026-07-11 08:44:08  WARNING   monitor.poller: Recaptcha error detected on Tbilisi → Baku! Forcing browser reload.
+2026-07-11 08:44:16  WARNING   monitor.poller: Recaptcha error detected on Anomaly Check! Forcing browser reload.
+2026-07-11 08:45:10  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 08:45:12  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 08:45:12  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 08:45:12  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 08:45:14  INFO      browser.session: Starting BrowserManager...
+2026-07-11 08:45:14  INFO      browser.session: No proxy configured.
+2026-07-11 08:45:14  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 08:45:14  INFO      browser.session: Resource blocking disabled. Loading full page to avoid bot detection.
+2026-07-11 08:45:14  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 08:45:16  INFO      browser.session: Cloudflare cleared successfully!
+2026-07-11 08:45:16  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-07-11 08:48:52  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 08:48:54  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 08:48:54  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 08:48:54  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 08:48:55  INFO      browser.session: Starting BrowserManager...
+2026-07-11 08:48:56  INFO      browser.session: No proxy configured.
+2026-07-11 08:48:56  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 08:48:56  INFO      browser.session: Resource blocking disabled. Loading full page to avoid bot detection.
+2026-07-11 08:48:56  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 08:48:58  INFO      browser.session: Cloudflare cleared successfully!
+2026-07-11 08:48:58  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-07-11 08:49:06  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:49:07  WARNING   monitor.poller: Recaptcha error detected on Baku → Tbilisi! Forcing browser reload.
+2026-07-11 08:49:10  WARNING   monitor.poller: Recaptcha error detected on Tbilisi → Baku! Forcing browser reload.
+2026-07-11 08:49:13  WARNING   monitor.poller: Recaptcha error detected on Anomaly Check! Forcing browser reload.
+2026-07-11 08:49:15  INFO      monitor.poller: Poll cycle complete. Next poll in 2 min (around 08:51:12).
+2026-07-11 08:49:15  INFO      monitor.poller: Force poll requested via Telegram!
+2026-07-11 08:49:15  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:49:15  WARNING   monitor.poller: Recaptcha error detected on Baku → Tbilisi! Forcing browser reload.
+2026-07-11 08:49:18  WARNING   monitor.poller: Recaptcha error detected on Tbilisi → Baku! Forcing browser reload.
+2026-07-11 08:49:21  WARNING   monitor.poller: Recaptcha error detected on Anomaly Check! Forcing browser reload.
+2026-07-11 08:49:24  INFO      monitor.poller: Poll cycle complete. Next poll in 2 min (around 08:50:57).
+2026-07-11 08:50:37  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 08:50:38  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 08:50:38  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 08:50:39  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 08:50:40  INFO      browser.session: Starting BrowserManager...
+2026-07-11 08:50:40  INFO      browser.session: No proxy configured.
+2026-07-11 08:50:40  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 08:50:40  INFO      browser.session: Resource blocking disabled. Loading full page to avoid bot detection.
+2026-07-11 08:50:40  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 08:50:42  INFO      browser.session: Cloudflare cleared successfully!
+2026-07-11 08:50:42  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-07-11 08:50:47  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:50:48  WARNING   monitor.poller: Recaptcha error detected on Baku → Tbilisi! Forcing browser reload.
+2026-07-11 08:50:50  WARNING   monitor.poller: Recaptcha error detected on Tbilisi → Baku! Forcing browser reload.
+2026-07-11 08:50:53  WARNING   monitor.poller: Recaptcha error detected on Anomaly Check! Forcing browser reload.
+2026-07-11 08:50:55  INFO      monitor.poller: Poll cycle complete. Next poll in 1 min (around 08:52:06).
+2026-07-11 08:50:55  INFO      monitor.poller: Force poll requested via Telegram!
+2026-07-11 08:50:55  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:50:56  WARNING   monitor.poller: Recaptcha error detected on Baku → Tbilisi! Forcing browser reload.
+2026-07-11 08:50:59  WARNING   monitor.poller: Recaptcha error detected on Tbilisi → Baku! Forcing browser reload.
+2026-07-11 08:51:02  WARNING   monitor.poller: Recaptcha error detected on Anomaly Check! Forcing browser reload.
+2026-07-11 08:51:04  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 08:52:17  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 08:52:17  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 08:52:18  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 08:52:19  INFO      browser.session: Starting BrowserManager...
+2026-07-11 08:52:19  INFO      browser.session: No proxy configured.
+2026-07-11 08:52:19  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 08:52:20  INFO      browser.session: Resource blocking disabled. Loading full page to avoid bot detection.
+2026-07-11 08:52:20  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 08:52:21  INFO      browser.session: Cloudflare cleared successfully!
+2026-07-11 08:52:21  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-07-11 08:52:29  INFO      monitor.poller: Force poll requested via Telegram!
+2026-07-11 08:52:29  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:52:35  WARNING   monitor.poller: Recaptcha error detected on Baku → Tbilisi! Forcing browser reload.
+2026-07-11 08:52:42  WARNING   monitor.poller: Recaptcha error detected on Tbilisi → Baku! Forcing browser reload.
+2026-07-11 08:52:49  WARNING   monitor.poller: Recaptcha error detected on Anomaly Check! Forcing browser reload.
+2026-07-11 08:52:54  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 08:53:48  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 08:53:48  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 08:53:49  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 08:53:50  INFO      browser.session: Starting BrowserManager...
+2026-07-11 08:53:50  INFO      browser.session: No proxy configured.
+2026-07-11 08:53:50  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 08:53:50  INFO      browser.session: Resource blocking disabled. Loading full page to avoid bot detection.
+2026-07-11 08:53:50  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 08:53:52  INFO      browser.session: Cloudflare cleared successfully!
+2026-07-11 08:53:52  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-07-11 08:54:18  INFO      config.dynamic_settings: Dynamic setting PROXY_CONFIG updated to {'server': 'http://64.137.96.74:6641', 'username': 'rqolfkfs', 'password': 'g4bi7ahjwbpp'}
+2026-07-11 08:54:36  INFO      monitor.poller: Force poll requested via Telegram!
+2026-07-11 08:54:36  INFO      monitor.poller: Proxy change detected! Restarting browser immediately...
+2026-07-11 08:54:36  INFO      browser.session: Stopping BrowserManager...
+2026-07-11 08:54:39  INFO      browser.session: Starting BrowserManager...
+2026-07-11 08:54:39  INFO      browser.session: Using proxy: http://64.137.96.74:6641
+2026-07-11 08:54:39  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 08:54:39  INFO      browser.session: Resource blocking disabled. Loading full page to avoid bot detection.
+2026-07-11 08:54:39  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 08:54:43  INFO      browser.session: Cloudflare cleared successfully!
+2026-07-11 08:54:43  INFO      monitor.poller: Browser restart completed successfully.
+2026-07-11 08:54:43  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 08:54:49  WARNING   monitor.poller: Recaptcha error detected on Baku → Tbilisi! Forcing browser reload.
+2026-07-11 08:54:56  WARNING   monitor.poller: Recaptcha error detected on Tbilisi → Baku! Forcing browser reload.
+2026-07-11 08:55:04  WARNING   monitor.poller: Recaptcha error detected on Anomaly Check! Forcing browser reload.
+2026-07-11 08:55:59  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 08:58:21  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 08:58:21  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 08:58:21  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 08:58:23  INFO      browser.session: Starting BrowserManager...
+2026-07-11 08:58:23  INFO      browser.session: Using proxy: http://64.137.96.74:6641
+2026-07-11 08:58:23  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 08:58:23  INFO      browser.session: Resource blocking disabled. Loading full page to avoid bot detection.
+2026-07-11 08:58:23  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 08:58:27  INFO      browser.session: Cloudflare cleared successfully!
+2026-07-11 08:58:27  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-07-11 09:01:07  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 09:01:09  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 09:01:09  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 09:01:09  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 09:01:10  INFO      browser.session: Starting BrowserManager...
+2026-07-11 09:01:11  INFO      browser.session: Using proxy: http://64.137.96.74:6641
+2026-07-11 09:01:11  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 09:01:11  INFO      browser.session: Resource blocking disabled. Loading full page to avoid bot detection.
+2026-07-11 09:01:11  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 09:01:15  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:01:18  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:01:21  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:01:24  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:01:27  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:01:30  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:01:33  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:01:36  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:01:39  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:01:42  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:01:45  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:01:48  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:01:51  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:01:54  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:01:57  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:00  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:03  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:06  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:09  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:12  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:15  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:18  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:21  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:24  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:27  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:30  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:33  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:36  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:39  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:42  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:45  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:48  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:51  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:54  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:02:57  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:03:00  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:03:03  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:03:06  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:03:09  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:03:11  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-07-11 09:03:12  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:03:29  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 09:18:39  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 09:18:39  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 09:18:39  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 09:18:40  ERROR     config.dynamic_settings: Failed to load dynamic settings: Expecting property name enclosed in double quotes: line 4 column 1 (char 55)
+2026-07-11 09:18:41  INFO      browser.session: Starting BrowserManager...
+2026-07-11 09:18:41  ERROR     config.dynamic_settings: Failed to load dynamic settings: Expecting property name enclosed in double quotes: line 4 column 1 (char 55)
+2026-07-11 09:18:41  INFO      browser.session: Using proxy: http://198.105.121.200:6462
+2026-07-11 09:18:41  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 09:18:41  INFO      browser.session: Resource blocking disabled. Loading full page to avoid bot detection.
+2026-07-11 09:18:41  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 09:18:45  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:18:48  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:18:51  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:18:54  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 09:19:20  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 09:19:20  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 09:19:21  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 09:19:22  INFO      browser.session: Starting BrowserManager...
+2026-07-11 09:19:22  INFO      browser.session: Using proxy: http://64.137.96.74:6641
+2026-07-11 09:19:22  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 09:19:23  INFO      browser.session: Resource blocking disabled. Loading full page to avoid bot detection.
+2026-07-11 09:19:23  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 09:19:26  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:19:29  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:19:32  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:19:35  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:19:38  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:19:41  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:19:44  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:19:47  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 09:19:52  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 09:19:52  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 09:19:53  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 09:19:53  ERROR     config.dynamic_settings: Failed to load dynamic settings: Expecting ',' delimiter: line 5 column 1 (char 80)
+2026-07-11 09:19:54  INFO      browser.session: Starting BrowserManager...
+2026-07-11 09:19:54  ERROR     config.dynamic_settings: Failed to load dynamic settings: Expecting ',' delimiter: line 5 column 1 (char 80)
+2026-07-11 09:19:54  INFO      browser.session: Using proxy: http://198.105.121.200:6462
+2026-07-11 09:19:54  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 09:19:55  INFO      browser.session: Resource blocking disabled. Loading full page to avoid bot detection.
+2026-07-11 09:19:55  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 09:19:56  CRITICAL  monitor.poller: Failed to start browser initially: Page.goto: net::ERR_ABORTED; maybe frame was detached?
+Call log:
+  - navigating to "https://ticket.ady.az/", waiting until "domcontentloaded"
+
+2026-07-11 09:19:56  ERROR     config.dynamic_settings: Failed to load dynamic settings: Expecting ',' delimiter: line 5 column 1 (char 80)
+2026-07-11 09:19:56  ERROR     config.dynamic_settings: Failed to load dynamic settings: Expecting ',' delimiter: line 5 column 1 (char 80)
+2026-07-11 09:19:56  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-07-11 09:19:58  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 09:20:05  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 09:20:05  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 09:20:06  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 09:20:06  ERROR     config.dynamic_settings: Failed to load dynamic settings: Expecting ',' delimiter: line 5 column 1 (char 80)
+2026-07-11 09:20:07  INFO      browser.session: Starting BrowserManager...
+2026-07-11 09:20:07  ERROR     config.dynamic_settings: Failed to load dynamic settings: Expecting ',' delimiter: line 5 column 1 (char 80)
+2026-07-11 09:20:07  INFO      browser.session: Using proxy: http://198.105.121.200:6462
+2026-07-11 09:20:07  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 09:20:07  INFO      browser.session: Resource blocking disabled. Loading full page to avoid bot detection.
+2026-07-11 09:20:07  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 09:20:10  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:20:13  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:20:16  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:20:19  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:20:22  ERROR     config.dynamic_settings: Failed to load dynamic settings: Expecting ',' delimiter: line 5 column 1 (char 80)
+2026-07-11 09:20:22  ERROR     config.dynamic_settings: Failed to load dynamic settings: Expecting ',' delimiter: line 5 column 1 (char 80)
+2026-07-11 09:20:22  ERROR     config.dynamic_settings: Failed to load dynamic settings: Expecting ',' delimiter: line 5 column 1 (char 80)
+2026-07-11 09:20:22  ERROR     config.dynamic_settings: Failed to load dynamic settings: Expecting ',' delimiter: line 5 column 1 (char 80)
+2026-07-11 09:20:22  ERROR     config.dynamic_settings: Failed to load dynamic settings: Expecting ',' delimiter: line 5 column 1 (char 80)
+2026-07-11 09:20:22  ERROR     config.dynamic_settings: Failed to load dynamic settings: Expecting ',' delimiter: line 5 column 1 (char 80)
+2026-07-11 09:20:22  ERROR     config.dynamic_settings: Failed to load dynamic settings: Expecting ',' delimiter: line 5 column 1 (char 80)
+2026-07-11 09:20:22  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:20:24  ERROR     config.dynamic_settings: Failed to load dynamic settings: Expecting ',' delimiter: line 5 column 1 (char 80)
+2026-07-11 09:20:25  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:20:27  ERROR     config.dynamic_settings: Failed to load dynamic settings: Expecting ',' delimiter: line 5 column 1 (char 80)
+2026-07-11 09:20:27  ERROR     config.dynamic_settings: Failed to load dynamic settings: Expecting ',' delimiter: line 5 column 1 (char 80)
+2026-07-11 09:20:27  INFO      config.dynamic_settings: Dynamic setting PROXY_CONFIG updated to none
+2026-07-11 09:20:29  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:20:32  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:20:35  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:20:38  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:20:38  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 09:20:40  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 09:20:40  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 09:20:41  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 09:20:42  INFO      browser.session: Starting BrowserManager...
+2026-07-11 09:20:42  INFO      browser.session: No proxy configured.
+2026-07-11 09:20:42  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 09:20:42  INFO      browser.session: Resource blocking disabled. Loading full page to avoid bot detection.
+2026-07-11 09:20:42  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 09:20:44  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:20:47  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:20:50  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:20:53  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:20:57  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:21:00  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:21:03  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:21:06  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:21:09  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:21:12  INFO      browser.session: Waiting for Cloudflare... (Title: Train Schedule and Timetable in Baku, Azerbaijan)
+2026-07-11 09:21:14  INFO      __main__: Received signal 2 – shutting down.
+2026-07-11 09:22:47  INFO      monitor.poller: ADY Monitor starting…
+2026-07-11 09:22:47  INFO      monitor.poller: Loaded state with 2 saved routes
+2026-07-11 09:22:48  INFO      telegram.bot: Telegram listener started – send a date (DD-MM-YYYY) to check seats
+2026-07-11 09:22:49  INFO      browser.session: Starting BrowserManager...
+2026-07-11 09:22:49  INFO      browser.session: No proxy configured.
+2026-07-11 09:22:49  INFO      browser.session: Launching Playwright Chromium...
+2026-07-11 09:22:49  INFO      browser.session: Resource blocking disabled. Loading full page to avoid bot detection.
+2026-07-11 09:22:49  INFO      browser.session: Navigating to https://ticket.ady.az ...
+2026-07-11 09:22:51  INFO      browser.session: Cloudflare cleared. Page title: Train Schedule and Timetable in Baku, Azerbaijan
+2026-07-11 09:22:51  INFO      browser.session: Cloudflare cleared successfully!
+2026-07-11 09:22:51  INFO      monitor.poller: Monitor running. Polling every 1–2 minutes.
+2026-07-11 09:22:59  INFO      monitor.poller: Force poll requested via Telegram!
+2026-07-11 09:22:59  INFO      monitor.poller: Starting poll cycle…
+2026-07-11 09:23:02  INFO      monitor.poller: Polled Baku → Tbilisi → 17 available dates
+2026-07-11 09:23:02  INFO      monitor.poller: Date changes for Baku → Tbilisi: +16 / -3 (forced=True)
+2026-07-11 09:23:04  INFO      monitor.poller: Polled Tbilisi → Baku → 1 available dates
+2026-07-11 09:23:04  INFO      monitor.poller: Date changes for Tbilisi → Baku: +1 / -0 (forced=True)
+2026-07-11 09:23:06  INFO      monitor.poller: Polled Anomaly Check → 30 available dates
+2026-07-11 09:23:06  INFO      monitor.poller: Date changes for Anomaly Check: +30 / -0 (forced=True)
+2026-07-11 09:23:28  INFO      __main__: Received signal 2 – shutting down.

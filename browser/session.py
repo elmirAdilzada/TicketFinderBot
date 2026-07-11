@@ -151,36 +151,33 @@ class BrowserManager:
                     "--disable-blink-features=AutomationControlled",
                     "--no-sandbox",
                     "--disable-dev-shm-usage",
-                    "--disable-web-security",
                     "--disable-features=IsolateOrigins,site-per-process",
                     "--window-size=1920,1080",
                 ],
                 viewport={"width": 1920, "height": 1080},
-                locale="en-US",
-                user_agent=(
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/136.0.0.0 Safari/537.36"
-                ),
+                locale="az",
             )
 
             pages = ctx.pages
             page = pages[0] if pages else ctx.new_page()
 
             # ── Block bandwidth-heavy resources via proxy ──────────────────────
-            # Images, fonts, media and stylesheets are not needed for API calls.
-            # This reduces proxy bandwidth by ~80-90%.
-            BLOCKED_TYPES = {"image", "media", "font", "stylesheet"}
-            # Keep JS unblocked — needed for grecaptcha and page logic
-            # Keep 'script' unblocked for the same reason
+            # We are disabling this blocking for now because blocking CSS and fonts 
+            # makes the page look broken and can trigger bot detection algorithms.
+            BLOCKED_TYPES = set()
+            
             def _handle_route(route):
+                url = route.request.url
+                if "google" in url or "gstatic" in url or "recaptcha" in url:
+                    route.continue_()
+                    return
                 if route.request.resource_type in BLOCKED_TYPES:
                     route.abort()
                 else:
                     route.continue_()
 
             page.route("**/*", _handle_route)
-            log.info("Resource blocking enabled (images/media/fonts/css blocked)")
+            log.info("Resource blocking disabled. Loading full page to avoid bot detection.")
 
             # Apply stealth
             try:
@@ -246,18 +243,16 @@ class BrowserManager:
             if self._stop_event.is_set():
                 log.info("Cloudflare wait aborted due to stop event.")
                 break
-                
+
             title = page.title()
-            if not any(cf in title for cf in cf_titles):
-                if "ADY" in title:
-                    return
-                cookies = ctx.cookies()
-                if any(c["name"] == "cf_clearance" for c in cookies):
-                    return
+            # If the title is NOT a Cloudflare challenge, we're good
+            if not any(cf in title for cf in cf_titles) and title.strip():
+                log.info("Cloudflare cleared. Page title: %s", title)
+                return
 
             safe_title = title.encode("ascii", "ignore").decode()
             log.info("Waiting for Cloudflare... (Title: %s)", safe_title)
-            
+
             # Wait in small chunks to remain responsive to stop events
             sleep_deadline = time.monotonic() + 3
             while time.monotonic() < sleep_deadline:

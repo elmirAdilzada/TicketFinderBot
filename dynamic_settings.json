@@ -1,4 +1,3 @@
 {
-  "POLL_MIN_SECONDS": 60,
-  "POLL_MAX_SECONDS": 120
+  "PROXY_CONFIG": "none"
 }
