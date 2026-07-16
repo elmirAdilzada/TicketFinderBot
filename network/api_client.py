@@ -155,7 +155,7 @@ class ADYApiClient:
                 try {{
                     let siteKey = '6LecJSYtAAAAAMSGKGKhA72oiCfAWr8EoAUzEMgj';
                     const html = document.documentElement.innerHTML;
-                    const match = html.match(/6[A-Za-z0-9_-]{{38}}/);
+                    const match = html.match(/6[A-Za-z0-9_-]{{35,45}}/);
                     if (match) {{
                         siteKey = match[0];
                     }}
