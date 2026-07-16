@@ -98,34 +98,6 @@ def _send(text: str, parse_mode: str = "HTML", reply_markup: Optional[dict] = No
     return last_msg_id
 
 
-def send_photo(photo_path: str, caption: str = "") -> Optional[int]:
-    """Send a photo to broadcast chats."""
-    if not TELEGRAM_BOT_TOKEN or TELEGRAM_BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
-        return None
-    
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
-    target_chats = _get_broadcast_chat_ids()
-    last_msg_id = None
-    
-    for cid in target_chats:
-        if not cid:
-            continue
-        try:
-            with open(photo_path, "rb") as f:
-                resp = requests.post(
-                    url,
-                    data={"chat_id": cid, "caption": caption, "parse_mode": "HTML"},
-                    files={"photo": f},
-                    timeout=20
-                )
-            if resp.status_code == 200:
-                last_msg_id = resp.json().get("result", {}).get("message_id")
-            else:
-                log.warning("Telegram sendPhoto HTTP %s: %s", resp.status_code, resp.text[:200])
-        except Exception as exc:
-            log.warning("Telegram send_photo error: %s", exc)
-            
-    return last_msg_id
 def _edit(chat_id: str, message_id: int, text: str, parse_mode: str = "HTML", reply_markup: Optional[dict] = None) -> bool:
     if not TELEGRAM_BOT_TOKEN or TELEGRAM_BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
         return False

@@ -238,8 +238,6 @@ class BrowserManager:
         """Called only from the playwright thread."""
         deadline = time.monotonic() + timeout
         cf_titles = ["Just a moment", "Attention Required", "Access denied"]
-        import random
-        screenshot_sent = False
 
         while time.monotonic() < deadline:
             if self._stop_event.is_set():
@@ -254,37 +252,6 @@ class BrowserManager:
 
             safe_title = title.encode("ascii", "ignore").decode()
             log.info("Waiting for Cloudflare... (Title: %s)", safe_title)
-            
-            # Send screenshot once per CF challenge encounter
-            if not screenshot_sent:
-                try:
-                    screenshot_sent = True
-                    screenshot_path = "cf_debug.png"
-                    page.screenshot(path=screenshot_path)
-                    from telegram.bot import send_photo
-                    send_photo(screenshot_path, f"Cloudflare screen: {safe_title}")
-                except Exception as e:
-                    log.warning("Could not send CF screenshot: %s", e)
-
-            # Try to explicitly click the Turnstile checkbox/widget to bypass faster
-            try:
-                cf_iframe = page.frame_locator('iframe[src*="cloudflare"], iframe[src*="turnstile"]')
-                if cf_iframe.locator('input[type="checkbox"]').count() > 0:
-                    cf_iframe.locator('input[type="checkbox"]').first.click(force=True, timeout=1000)
-                    log.info("Explicitly clicked the Cloudflare Turnstile checkbox.")
-                else:
-                    box = page.locator('.cf-turnstile, #challenge-stage, iframe[src*="cloudflare"]')
-                    if box.count() > 0:
-                        box.first.click(force=True, timeout=1000)
-                        log.info("Clicked the Cloudflare challenge box area.")
-                    else:
-                        x = random.randint(100, 800)
-                        y = random.randint(100, 600)
-                        page.mouse.move(x, y)
-                        if random.random() < 0.3:
-                            page.mouse.click(x, y)
-            except Exception:
-                pass
 
             # Wait in small chunks to remain responsive to stop events
             sleep_deadline = time.monotonic() + 3
