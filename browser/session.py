@@ -144,8 +144,8 @@ class BrowserManager:
 
             log.info("Launching Playwright Chromium...")
             
+            # Prepare base launch kwargs without user_data_dir
             launch_kwargs = {
-                "user_data_dir": user_data_dir,
                 "headless": False,
                 "proxy": proxy_config,
                 "args": [
@@ -160,18 +160,19 @@ class BrowserManager:
             }
 
             # Attempt to use system browsers first to bypass Cloudflare fingerprinting
+            # IMPORTANT: We must use separate user_data_dir for each browser to prevent lock/corruption errors
             try:
-                ctx = pw.chromium.launch_persistent_context(**launch_kwargs, channel="chrome")
+                ctx = pw.chromium.launch_persistent_context(user_data_dir=user_data_dir + "_chrome", **launch_kwargs, channel="chrome")
                 log.info("Successfully launched system Chrome.")
             except Exception as e:
-                log.debug("Failed to launch system Chrome: %s", e)
+                log.warning("Failed to launch system Chrome: %s", e)
                 try:
-                    ctx = pw.chromium.launch_persistent_context(**launch_kwargs, channel="msedge")
+                    ctx = pw.chromium.launch_persistent_context(user_data_dir=user_data_dir + "_edge", **launch_kwargs, channel="msedge")
                     log.info("Successfully launched system Edge.")
                 except Exception as e2:
-                    log.debug("Failed to launch system Edge: %s", e2)
+                    log.warning("Failed to launch system Edge: %s", e2)
                     # Fallback to bundled chromium
-                    ctx = pw.chromium.launch_persistent_context(**launch_kwargs)
+                    ctx = pw.chromium.launch_persistent_context(user_data_dir=user_data_dir, **launch_kwargs)
                     log.info("Successfully launched bundled Chromium.")
 
             pages = ctx.pages
@@ -282,7 +283,7 @@ class BrowserManager:
                             page.mouse.click(x, y)
                             log.info("Clicked Cloudflare Turnstile iframe at (%f, %f)", x, y)
             except Exception as e:
-                log.debug("Error interacting with Turnstile challenge: %s", e)
+                log.warning("Error interacting with Turnstile challenge: %s", e)
 
             # Wait in small chunks to remain responsive to stop events
             sleep_deadline = time.monotonic() + 3
