@@ -238,6 +238,7 @@ class BrowserManager:
         """Called only from the playwright thread."""
         deadline = time.monotonic() + timeout
         cf_titles = ["Just a moment", "Attention Required", "Access denied"]
+        import random
 
         while time.monotonic() < deadline:
             if self._stop_event.is_set():
@@ -252,6 +253,16 @@ class BrowserManager:
 
             safe_title = title.encode("ascii", "ignore").decode()
             log.info("Waiting for Cloudflare... (Title: %s)", safe_title)
+
+            # Move mouse randomly to help trigger Turnstile
+            try:
+                x = random.randint(100, 800)
+                y = random.randint(100, 600)
+                page.mouse.move(x, y)
+                if random.random() < 0.3:
+                    page.mouse.click(x, y)
+            except Exception:
+                pass
 
             # Wait in small chunks to remain responsive to stop events
             sleep_deadline = time.monotonic() + 3
