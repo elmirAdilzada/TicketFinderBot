@@ -239,6 +239,7 @@ class BrowserManager:
         deadline = time.monotonic() + timeout
         cf_titles = ["Just a moment", "Attention Required", "Access denied"]
         import random
+        screenshot_sent = False
 
         while time.monotonic() < deadline:
             if self._stop_event.is_set():
@@ -253,6 +254,17 @@ class BrowserManager:
 
             safe_title = title.encode("ascii", "ignore").decode()
             log.info("Waiting for Cloudflare... (Title: %s)", safe_title)
+            
+            # Send screenshot once per CF challenge encounter
+            if not screenshot_sent:
+                try:
+                    screenshot_sent = True
+                    screenshot_path = "cf_debug.png"
+                    page.screenshot(path=screenshot_path)
+                    from telegram.bot import send_photo
+                    send_photo(screenshot_path, f"Cloudflare screen: {safe_title}")
+                except Exception as e:
+                    log.warning("Could not send CF screenshot: %s", e)
 
             # Try to explicitly click the Turnstile checkbox/widget to bypass faster
             try:
