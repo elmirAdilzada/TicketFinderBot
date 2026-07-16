@@ -153,8 +153,15 @@ class ADYApiClient:
                 }}
                 
                 try {{
+                    let siteKey = '6LecJSYtAAAAAMSGKGKhA72oiCfAWr8EoAUzEMgj';
+                    const html = document.documentElement.innerHTML;
+                    const match = html.match(/6[A-Za-z0-9_-]{{38}}/);
+                    if (match) {{
+                        siteKey = match[0];
+                    }}
+
                     grecaptcha.ready(() => {{
-                        grecaptcha.execute('6LfpFmsbAAAAAKigEk1t8PTNaLcUuNMAd5WSF_uq', {{action: 'submit'}})
+                        grecaptcha.execute(siteKey, {{action: 'submit'}})
                             .then(resolve)
                             .catch(() => resolve(""));
                     }});
