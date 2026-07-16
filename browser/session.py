@@ -143,20 +143,36 @@ class BrowserManager:
                 log.info("No proxy configured.")
 
             log.info("Launching Playwright Chromium...")
-            ctx = pw.chromium.launch_persistent_context(
-                user_data_dir=user_data_dir,
-                headless=False,
-                proxy=proxy_config,
-                args=[
+            
+            launch_kwargs = {
+                "user_data_dir": user_data_dir,
+                "headless": False,
+                "proxy": proxy_config,
+                "args": [
                     "--disable-blink-features=AutomationControlled",
                     "--no-sandbox",
                     "--disable-dev-shm-usage",
                     "--disable-features=IsolateOrigins,site-per-process",
                     "--window-size=1920,1080",
                 ],
-                viewport={"width": 1920, "height": 1080},
-                locale="az",
-            )
+                "viewport": {"width": 1920, "height": 1080},
+                "locale": "az",
+            }
+
+            # Attempt to use system browsers first to bypass Cloudflare fingerprinting
+            try:
+                ctx = pw.chromium.launch_persistent_context(**launch_kwargs, channel="chrome")
+                log.info("Successfully launched system Chrome.")
+            except Exception as e:
+                log.debug("Failed to launch system Chrome: %s", e)
+                try:
+                    ctx = pw.chromium.launch_persistent_context(**launch_kwargs, channel="msedge")
+                    log.info("Successfully launched system Edge.")
+                except Exception as e2:
+                    log.debug("Failed to launch system Edge: %s", e2)
+                    # Fallback to bundled chromium
+                    ctx = pw.chromium.launch_persistent_context(**launch_kwargs)
+                    log.info("Successfully launched bundled Chromium.")
 
             pages = ctx.pages
             page = pages[0] if pages else ctx.new_page()
@@ -252,6 +268,21 @@ class BrowserManager:
 
             safe_title = title.encode("ascii", "ignore").decode()
             log.info("Waiting for Cloudflare... (Title: %s)", safe_title)
+
+            # Try to click the Turnstile iframe if it's an interactive challenge
+            try:
+                for iframe in page.locator("iframe").all():
+                    src = iframe.get_attribute("src") or ""
+                    if "challenge" in src or "turnstile" in src:
+                        box = iframe.bounding_box()
+                        if box and box["width"] > 0 and box["height"] > 0:
+                            x = box["x"] + box["width"] / 2
+                            y = box["y"] + box["height"] / 2
+                            page.mouse.move(x, y)
+                            page.mouse.click(x, y)
+                            log.info("Clicked Cloudflare Turnstile iframe at (%f, %f)", x, y)
+            except Exception as e:
+                log.debug("Error interacting with Turnstile challenge: %s", e)
 
             # Wait in small chunks to remain responsive to stop events
             sleep_deadline = time.monotonic() + 3
