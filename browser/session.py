@@ -254,13 +254,23 @@ class BrowserManager:
             safe_title = title.encode("ascii", "ignore").decode()
             log.info("Waiting for Cloudflare... (Title: %s)", safe_title)
 
-            # Move mouse randomly to help trigger Turnstile
+            # Try to explicitly click the Turnstile checkbox/widget to bypass faster
             try:
-                x = random.randint(100, 800)
-                y = random.randint(100, 600)
-                page.mouse.move(x, y)
-                if random.random() < 0.3:
-                    page.mouse.click(x, y)
+                cf_iframe = page.frame_locator('iframe[src*="cloudflare"], iframe[src*="turnstile"]')
+                if cf_iframe.locator('input[type="checkbox"]').count() > 0:
+                    cf_iframe.locator('input[type="checkbox"]').first.click(force=True, timeout=1000)
+                    log.info("Explicitly clicked the Cloudflare Turnstile checkbox.")
+                else:
+                    box = page.locator('.cf-turnstile, #challenge-stage, iframe[src*="cloudflare"]')
+                    if box.count() > 0:
+                        box.first.click(force=True, timeout=1000)
+                        log.info("Clicked the Cloudflare challenge box area.")
+                    else:
+                        x = random.randint(100, 800)
+                        y = random.randint(100, 600)
+                        page.mouse.move(x, y)
+                        if random.random() < 0.3:
+                            page.mouse.click(x, y)
             except Exception:
                 pass
 
