@@ -152,9 +152,20 @@ class ADYApiClient:
                     return resolve("");
                 }}
                 
+                let siteKey = '6LecJSYtAAAAAMSGKGKhA72oiCfAWr8EoAUzEMgj'; // default fallback
+                for (let script of document.scripts) {{
+                    if (script.src && script.src.includes('recaptcha/api.js?render=')) {{
+                        const match = script.src.match(/render=([^&]+)/);
+                        if (match) {{
+                            siteKey = match[1];
+                            break;
+                        }}
+                    }}
+                }}
+                
                 try {{
                     grecaptcha.ready(() => {{
-                        grecaptcha.execute('6LecJSYtAAAAAMSGKGKhA72oiCfAWr8EoAUzEMgj', {{action: 'submit'}})
+                        grecaptcha.execute(siteKey, {{action: 'submit'}})
                             .then(resolve)
                             .catch(() => resolve(""));
                     }});
