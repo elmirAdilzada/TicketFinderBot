@@ -25,12 +25,14 @@ ROUTES = [
         "from_station": 232,
         "to_station":   170,
         "way":          1,   # 1 = outbound
+        "url_slug":    "baki-sern-tbilisi",
     },
     {
         "label":       "Tbilisi → Baku",
         "from_station": 170,
         "to_station":   232,
         "way":          1,
+        "url_slug":    "tbilisi-baki-sern",
     },
     {
         "label":       "Anomaly Check",

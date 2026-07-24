@@ -134,7 +134,8 @@ def set_bot_commands() -> None:
         {"command": "stopfinding", "description": "Pause automatic search"},
         {"command": "settings", "description": "Configure monitor settings"},
         {"command": "check", "description": "Force manual check now"},
-        {"command": "dates", "description": "Show monitor status & instructions"}
+        {"command": "dates", "description": "Show monitor status & instructions"},
+        {"command": "trackdate", "description": "Track specific dates for changes"}
     ]
     
     try:
@@ -147,6 +148,28 @@ def set_bot_commands() -> None:
 
 def _detected_now() -> str:
     return datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+
+
+def _val_to_txt(val: str) -> str:
+    """Convert YYYY-MM-DD to DD-MM-YYYY."""
+    try:
+        parts = val.split("-")
+        return f"{parts[2]}-{parts[1]}-{parts[0]}"
+    except (IndexError, AttributeError):
+        return val
+
+
+def _build_booking_url(from_station: int, to_station: int, date_txt: str, url_slug: str = None) -> str:
+    """Build a deep booking URL for ticket.ady.az. date_txt: DD-MM-YYYY format."""
+    if not url_slug:
+        return "https://ticket.ady.az"
+    date_encoded = date_txt.replace("-", "%2F")
+    return (
+        f"https://ticket.ady.az/az/ticket-search/{url_slug}"
+        f"?from_station={from_station}&to_station={to_station}"
+        f"&date={date_encoded}&return_date={date_encoded}"
+        f"&two_way=true&child=0&infant=0&adults=1"
+    )
 
 
 def notify_dates_changed(label: str, dates: list[dict], new_date_vals: set[str], force_all: bool = False) -> Optional[int]:
@@ -228,8 +251,12 @@ def notify_all_dates_deleted(label: str) -> Optional[int]:
     return _send(text)
 
 
-def _send_traintrip_details(label: str, trip: Trip, chat_id: str) -> Optional[int]:
+def _send_traintrip_details(label: str, trip: Trip, chat_id: str,
+                            from_station: int = 0, to_station: int = 0,
+                            url_slug: str = None) -> Optional[int]:
     """Format and send detailed seat info for a trip."""
+    booking_url = _build_booking_url(from_station, to_station, trip.depart_date, url_slug)
+
     lines = [
         f"🚆 <b>{label} — {trip.depart_date}</b>\n",
         f"<b>Train:</b> #{trip.train_number}",
@@ -246,7 +273,7 @@ def _send_traintrip_details(label: str, trip: Trip, chat_id: str) -> Optional[in
                 f"{wc.total_free_seats} seats @ {wc.display_price}"
             )
 
-    lines.append(f'\n<a href="https://ticket.ady.az">🔗 Book now</a>')
+    lines.append(f'\n<a href="{booking_url}">🔗 Book now</a>')
     return _send("\n".join(lines), chat_id=chat_id)
 
 
@@ -272,7 +299,7 @@ def notify_recaptcha_error() -> Optional[int]:
     text = (
         "⚠️ <b>Recaptcha Error Detected</b>\n\n"
         "The server rejected our ReCaptcha token.\n"
-        "Reloading browser session automatically to bypass it...\n\n"
+        "Restarting browser session automatically to bypass it...\n\n"
         f"<b>Time:</b> {_detected_now()}"
     )
     return _send(text)
@@ -291,7 +318,8 @@ def notify_startup(routes: list[dict]) -> Optional[int]:
         f"⏸️ /stopfinding - Pause searching for tickets\n"
         f"⚙️ /settings - Configure bot settings\n"
         f"🔄 /check - Force manual check\n"
-        f"📅 /dates - Show available dates\n\n"
+        f"📅 /dates - Show available dates\n"
+        f"📌 /trackdate - Track specific dates\n\n"
         f"💬 Send a date (DD-MM-YYYY) anytime to check seat details.\n\n"
         f"<b>Time:</b> {_detected_now()}"
     )
@@ -400,13 +428,16 @@ class TelegramListener:
                             text = "/stopfinding"
                         elif text == "👥 Users":
                             text = "/users"
+                        elif text == "📌 Track Date":
+                            text = "/trackdate"
 
                         if text.lower() in ("/start", "/menu"):
                             menu_markup = {
                                 "keyboard": [
-                                    [{"text": "🔍 Check Date"}, {"text": "📊 Status"}],
+                                    [{"text": "🔍 Check Date"}, {"text": "📌 Track Date"}],
                                     [{"text": "▶️ Start Search"}, {"text": "⏸️ Stop Search"}],
-                                    [{"text": "⚙️ Settings"}, {"text": "👥 Users"}]
+                                    [{"text": "📊 Status"}, {"text": "⚙️ Settings"}],
+                                    [{"text": "👥 Users"}]
                                 ],
                                 "resize_keyboard": True,
                                 "is_persistent": True
@@ -430,7 +461,8 @@ class TelegramListener:
                                         "stopfinding": False,
                                         "check": False,
                                         "settings": False,
-                                        "dates": False
+                                        "dates": False,
+                                        "trackdate": False
                                     }
                                 }
                                 set_setting("ALLOWED_CHAT_IDS", allowed)
@@ -486,6 +518,12 @@ class TelegramListener:
                             if is_admin or has_perm("settings"):
                                 self._handle_users_menu(chat_id)
                             else: _send("❌ You do not have permission to use this command.", chat_id=chat_id)
+                        elif text.lower().startswith("/trackdate"):
+                            if has_perm("trackdate"):
+                                self._handle_trackdate_command(text, chat_id, is_admin)
+                            else: _send("❌ You do not have permission to use this command.", chat_id=chat_id)
+                        elif getattr(self, '_waiting_for_trackdate_limit', None):
+                            self._handle_trackdate_limit_input(text, chat_id)
                         elif getattr(self, '_waiting_for_setting', None):
                             self._handle_setting_input(text, chat_id)
                         elif getattr(self, '_waiting_for_user_name', None):
@@ -543,6 +581,17 @@ class TelegramListener:
                                 target_id = data.split(":")[1]
                                 self._remove_user(chat_id, target_id, cb.get("message", {}).get("message_id"))
                             else: _send("❌ Siz bu komandanı istifadə etmək üçün icazəyə sahib deyilsiniz.", chat_id=chat_id)
+                        elif data.startswith("trackdate_remove:"):
+                            if has_perm("trackdate"):
+                                idx = int(data.split(":")[1])
+                                self._handle_trackdate_remove(chat_id, idx)
+                            else: _send("❌ You do not have permission.", chat_id=chat_id)
+                        elif data.startswith("edit_trackdate_limit:"):
+                            if is_admin or has_perm("settings"):
+                                target_id = data.split(":")[1]
+                                self._waiting_for_trackdate_limit = target_id
+                                _send(f"✏️ <b>{target_id}</b> üçün yeni track limit daxil edin (1-50):", chat_id=chat_id)
+                            else: _send("❌ You do not have permission.", chat_id=chat_id)
                             
                         # Answer the callback query so the button stops spinning
                         cb_id = cb.get("id")
@@ -662,7 +711,10 @@ class TelegramListener:
                 )
                 if trip:
                     found_any = True
-                    _send_traintrip_details(label, trip, chat_id)
+                    _send_traintrip_details(label, trip, chat_id,
+                                            from_station=route["from_station"],
+                                            to_station=route["to_station"],
+                                            url_slug=route.get("url_slug"))
             except Exception as exc:
                 log.warning("Failed to fetch traintrip for %s on %s: %s", label, date_val, exc)
                 _send(f"⚠️ Failed to check <b>{label}</b> for {date_txt}: {exc}", chat_id=chat_id)
@@ -731,7 +783,8 @@ class TelegramListener:
             [btn("🔔 Notifications", "notifications", is_notif=True)],
             [btn("▶️ startfinding", "startfinding"), btn("⏸️ stopfinding", "stopfinding")],
             [btn("🔄 check", "check"), btn("⚙️ settings", "settings")],
-            [btn("📅 dates", "dates")],
+            [btn("📅 dates", "dates"), btn("📌 trackdate", "trackdate")],
+            [{"text": f"📌 Track Limit: {udata.get('trackdate_limit', 5)} | ✏️", "callback_data": f"edit_trackdate_limit:{target_id}"}],
             [{"text": "❌ Remove User", "callback_data": f"remove_user:{target_id}"}],
             [{"text": "🔙 Back to Users", "callback_data": "manage_users"}]
         ]
@@ -785,3 +838,300 @@ class TelegramListener:
             set_setting("ALLOWED_CHAT_IDS", allowed)
             _send(f"✅ Name for <b>{target_id}</b> updated to <b>{text.strip()}</b>!", chat_id=chat_id)
             self._handle_user_details(chat_id, target_id)
+
+    # ── Trackdate handlers ─────────────────────────────────────────────────────────
+
+    def _handle_trackdate_command(self, text: str, chat_id: str, is_admin: bool):
+        """Handle /trackdate commands."""
+        parts = text.strip().split()
+
+        # /trackdate or /trackdate list
+        if len(parts) == 1 or (len(parts) == 2 and parts[1].lower() == "list"):
+            self._handle_trackdate_list(chat_id, show_all=False)
+            return
+
+        if len(parts) == 2 and parts[1].lower() == "listall":
+            if is_admin:
+                self._handle_trackdate_list(chat_id, show_all=True)
+            else:
+                _send("❌ Yalnız admin bu komandanı istifadə edə bilər.", chat_id=chat_id)
+            return
+
+        if len(parts) == 2 and parts[1].lower() == "removeall":
+            self._handle_trackdate_removeall(chat_id)
+            return
+
+        if len(parts) == 3 and parts[1].lower() == "remove":
+            try:
+                index = int(parts[2]) - 1
+                self._handle_trackdate_remove(chat_id, index)
+            except ValueError:
+                _send("❌ Format: /trackdate remove <nömrə>", chat_id=chat_id)
+            return
+
+        # /trackdate DD-MM-YYYY or /trackdate DD-MM-YYYY DD-MM-YYYY
+        date_pat = re.compile(r"^\d{2}-\d{2}-\d{4}$")
+
+        if len(parts) == 2 and date_pat.match(parts[1]):
+            self._handle_trackdate_add(chat_id, parts[1], parts[1])
+            return
+
+        if len(parts) == 3 and date_pat.match(parts[1]) and date_pat.match(parts[2]):
+            self._handle_trackdate_add(chat_id, parts[1], parts[2])
+            return
+
+        _send(
+            "📌 <b>Track Date İstifadəsi:</b>\n\n"
+            "• /trackdate DD-MM-YYYY — Tək tarix izlə\n"
+            "• /trackdate DD-MM-YYYY DD-MM-YYYY — Tarix diapazonu izlə\n"
+            "• /trackdate list — İzləmələrimi göstər\n"
+            "• /trackdate remove N — N-ci izləməni sil\n"
+            "• /trackdate removeall — Hamısını sil",
+            chat_id=chat_id
+        )
+
+    def _handle_trackdate_add(self, chat_id: str, date_from_txt: str, date_to_txt: str):
+        """Add a new tracked date/range for the user."""
+        from config.dynamic_settings import get_setting, set_setting
+
+        def txt_to_val(txt):
+            p = txt.split("-")
+            return f"{p[2]}-{p[1]}-{p[0]}"
+
+        date_from = txt_to_val(date_from_txt)
+        date_to = txt_to_val(date_to_txt)
+
+        if date_from > date_to:
+            _send("❌ Başlanğıc tarix son tarixdən böyük ola bilməz.", chat_id=chat_id)
+            return
+
+        # Check limit
+        tracked = get_setting("TRACKED_DATES", {})
+        user_tracks = tracked.get(chat_id, [])
+
+        admin_chat = str(TELEGRAM_CHAT_ID)
+        is_admin = (chat_id == admin_chat)
+
+        if not is_admin:
+            users = _get_users()
+            user_data = users.get(chat_id, {})
+            limit = user_data.get("trackdate_limit", 5)
+            if len(user_tracks) >= limit:
+                _send(
+                    f"❌ Maksimum izləmə limitinə çatdınız ({limit}).\n"
+                    f"Yenisini əlavə etmək üçün köhnəsini silin: /trackdate list",
+                    chat_id=chat_id
+                )
+                return
+
+        # Check for duplicate
+        for t in user_tracks:
+            if t["date_from"] == date_from and t["date_to"] == date_to:
+                _send("ℹ️ Bu tarix artıq izlənir.", chat_id=chat_id)
+                return
+
+        new_track = {
+            "date_from": date_from,
+            "date_to": date_to,
+            "created_at": datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
+            "last_seats": {}
+        }
+        user_tracks.append(new_track)
+        tracked[chat_id] = user_tracks
+        set_setting("TRACKED_DATES", tracked)
+
+        # Poll interval info
+        poll_min = get_setting("POLL_MIN_SECONDS", 60)
+        poll_max = get_setting("POLL_MAX_SECONDS", 120)
+
+        if poll_min >= 3600:
+            interval_str = f"{poll_min // 3600}-{poll_max // 3600} saat"
+        elif poll_min >= 60:
+            interval_str = f"{poll_min // 60}-{poll_max // 60} dəqiqə"
+        else:
+            interval_str = f"{poll_min}-{poll_max} saniyə"
+
+        if date_from == date_to:
+            date_display = date_from_txt
+        else:
+            date_display = f"{date_from_txt} → {date_to_txt}"
+
+        route_count = sum(1 for r in ROUTES if not r.get("notify_only_on_empty"))
+
+        msg = (
+            f"✅ <b>Tarix izlənməyə başladı!</b>\n\n"
+            f"📅 <b>Tarix:</b> {date_display}\n"
+            f"🚆 <b>Marşrutlar:</b> {route_count} marşrut yoxlanılacaq\n"
+            f"⏱️ <b>Yoxlama intervalı:</b> hər {interval_str}\n\n"
+            f"Bilet tapıldıqda və ya yer sayı dəyişdikdə sizə bildiriş göndəriləcək.\n\n"
+            f"📋 İzləmələrinizi görmək üçün: /trackdate list"
+        )
+        _send(msg, chat_id=chat_id)
+
+    def _handle_trackdate_list(self, chat_id: str, show_all: bool = False):
+        """Show tracked dates for user or all users (admin)."""
+        from config.dynamic_settings import get_setting
+        tracked = get_setting("TRACKED_DATES", {})
+
+        if show_all:
+            if not tracked or all(len(v) == 0 for v in tracked.values()):
+                _send("📌 Heç bir istifadəçinin izlənən tarixi yoxdur.", chat_id=chat_id)
+                return
+
+            lines = ["📌 <b>Bütün İstifadəçilərin İzlənən Tarixləri</b>\n"]
+            users = _get_users()
+
+            for uid, tracks in tracked.items():
+                if not tracks:
+                    continue
+                user_name = users.get(uid, {}).get("name", "Unknown")
+                admin_chat = str(TELEGRAM_CHAT_ID)
+                if uid == admin_chat:
+                    user_name = "Admin"
+                lines.append(f"\n👤 <b>{user_name}</b> ({uid}):")
+                for i, t in enumerate(tracks, 1):
+                    df = _val_to_txt(t["date_from"])
+                    dt = _val_to_txt(t["date_to"])
+                    if t["date_from"] == t["date_to"]:
+                        lines.append(f"  {i}. 📅 {df}")
+                    else:
+                        lines.append(f"  {i}. 📅 {df} → {dt}")
+                    # Show last known seats
+                    last_seats = t.get("last_seats", {})
+                    for rl, dates_info in last_seats.items():
+                        for dv, si in dates_info.items():
+                            if si:
+                                lines.append(f"     └ {rl}: {si.get('total', '?')} yer")
+
+            _send("\n".join(lines), chat_id=chat_id)
+            return
+
+        # User view: show only their tracked dates
+        user_tracks = tracked.get(chat_id, [])
+        if not user_tracks:
+            _send(
+                "📌 <b>İzlənən tarixləriniz yoxdur.</b>\n\n"
+                "Yeni tarix izləmək üçün:\n"
+                "• /trackdate DD-MM-YYYY\n"
+                "• /trackdate DD-MM-YYYY DD-MM-YYYY",
+                chat_id=chat_id
+            )
+            return
+
+        lines = ["📌 <b>İzlənən Tarixləriniz</b>\n"]
+        inline_keyboard = []
+
+        for i, t in enumerate(user_tracks, 1):
+            df = _val_to_txt(t["date_from"])
+            dt = _val_to_txt(t["date_to"])
+            if t["date_from"] == t["date_to"]:
+                lines.append(f"{i}. 📅 {df}")
+            else:
+                lines.append(f"{i}. 📅 {df} → {dt}")
+
+            # Show last known seats
+            last_seats = t.get("last_seats", {})
+            for rl, dates_info in last_seats.items():
+                for dv, si in dates_info.items():
+                    if si:
+                        dtxt = _val_to_txt(dv)
+                        lines.append(f"     └ {rl} ({dtxt}): {si.get('total', '?')} yer")
+
+            inline_keyboard.append([
+                {"text": f"❌ {i}-ci izləməni sil", "callback_data": f"trackdate_remove:{i-1}"}
+            ])
+
+        lines.append(f"\n💡 Silmək üçün: /trackdate remove N")
+
+        _send("\n".join(lines), reply_markup={"inline_keyboard": inline_keyboard}, chat_id=chat_id)
+
+    def _handle_trackdate_remove(self, chat_id: str, index: int):
+        """Remove a tracked date by index."""
+        from config.dynamic_settings import get_setting, set_setting
+        tracked = get_setting("TRACKED_DATES", {})
+        user_tracks = tracked.get(chat_id, [])
+
+        if index < 0 or index >= len(user_tracks):
+            _send("❌ Yanlış nömrə.", chat_id=chat_id)
+            return
+
+        removed = user_tracks.pop(index)
+        tracked[chat_id] = user_tracks
+        set_setting("TRACKED_DATES", tracked)
+
+        df = _val_to_txt(removed["date_from"])
+        dt = _val_to_txt(removed["date_to"])
+        if removed["date_from"] == removed["date_to"]:
+            _send(f"✅ İzləmə silindi: 📅 {df}", chat_id=chat_id)
+        else:
+            _send(f"✅ İzləmə silindi: 📅 {df} → {dt}", chat_id=chat_id)
+
+    def _handle_trackdate_removeall(self, chat_id: str):
+        """Remove all tracked dates for the user."""
+        from config.dynamic_settings import get_setting, set_setting
+        tracked = get_setting("TRACKED_DATES", {})
+        count = len(tracked.get(chat_id, []))
+        tracked[chat_id] = []
+        set_setting("TRACKED_DATES", tracked)
+        _send(f"✅ {count} izləmə silindi.", chat_id=chat_id)
+
+    def _handle_trackdate_limit_input(self, text: str, chat_id: str):
+        """Handle admin input for changing a user's trackdate limit."""
+        target_id = self._waiting_for_trackdate_limit
+        self._waiting_for_trackdate_limit = None
+        if not target_id:
+            return
+        try:
+            limit = int(text)
+            if limit < 1 or limit > 50:
+                _send("❌ Limit 1-50 arasında olmalıdır.", chat_id=chat_id)
+                return
+            from config.dynamic_settings import get_setting, set_setting
+            allowed = get_setting("ALLOWED_CHAT_IDS", {})
+            if target_id in allowed:
+                allowed[target_id]["trackdate_limit"] = limit
+                set_setting("ALLOWED_CHAT_IDS", allowed)
+                _send(f"✅ <b>{target_id}</b> üçün track limit <b>{limit}</b> olaraq yeniləndi.", chat_id=chat_id)
+                self._handle_user_details(chat_id, target_id)
+        except ValueError:
+            _send("❌ Düzgün rəqəm daxil edin.", chat_id=chat_id)
+
+
+# ── Tracked Date Notification ───────────────────────────────────────────────────
+
+def notify_tracked_date_update(chat_id: str, label: str, trip: Trip, old_seats: dict,
+                                from_station: int, to_station: int,
+                                url_slug: str = None) -> Optional[int]:
+    """Notify a specific user about seat changes for a tracked date."""
+    booking_url = _build_booking_url(from_station, to_station, trip.depart_date, url_slug)
+
+    lines = [f"📌 <b>Tarix İzləmə Yeniləməsi</b>\n"]
+    lines.append(f"🚆 <b>{label} — {trip.depart_date}</b>")
+    lines.append(f"<b>Qatar:</b> #{trip.train_number}")
+    lines.append(f"<b>Çıxış:</b> {trip.depart_time}")
+    lines.append(f"<b>Gəliş:</b> {trip.arrival_time}")
+
+    new_total = trip.total_free_seats
+    if old_seats and old_seats.get("total") is not None:
+        old_total = old_seats["total"]
+        if new_total > old_total:
+            lines.append(f"<b>Boş Yerlər:</b> {old_total} → {new_total} 📈")
+        elif new_total < old_total:
+            lines.append(f"<b>Boş Yerlər:</b> {old_total} → {new_total} 📉")
+        else:
+            lines.append(f"<b>Boş Yerlər:</b> {new_total}")
+    else:
+        lines.append(f"<b>Boş Yerlər:</b> {new_total} 🆕")
+
+    if trip.wagon_classes:
+        lines.append("\n<b>Siniflər:</b>")
+        for wc in trip.wagon_classes:
+            lines.append(
+                f"  • {wc.wagon_type} ({wc.seat_class}): "
+                f"{wc.total_free_seats} yer @ {wc.display_price}"
+            )
+
+    lines.append(f'\n<a href="{booking_url}">🔗 İndi al</a>')
+    lines.append(f"<b>Yeniləndi:</b> {_detected_now()}")
+
+    return _send("\n".join(lines), chat_id=chat_id)
