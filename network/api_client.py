@@ -152,9 +152,18 @@ class ADYApiClient:
                     return resolve("");
                 }}
                 
+                let siteKey = '{RECAPTCHA_SITE_KEY}';
+                try {{
+                    const html = document.documentElement.innerHTML;
+                    const match = html.match(/(6L[a-zA-Z0-9_-]{{38}})/);
+                    if (match) {{
+                        siteKey = match[1];
+                    }}
+                }} catch (e) {{}}
+                
                 try {{
                     grecaptcha.ready(() => {{
-                        grecaptcha.execute('{RECAPTCHA_SITE_KEY}', {{action: 'submit'}})
+                        grecaptcha.execute(siteKey, {{action: 'submit'}})
                             .then(resolve)
                             .catch(() => resolve(""));
                     }});
