@@ -256,7 +256,14 @@ class ADYApiClient:
             return []
 
         dates: list[TripDate] = []
-        items = raw["data"].get(str(way), [])
+        data_dict = raw.get("data", {})
+        items = data_dict.get(str(way))
+        if not items and data_dict:
+            items = list(data_dict.values())[0]
+            
+        if not items:
+            items = []
+
         if isinstance(items, list):
             for item in items:
                 try:
