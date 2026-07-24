@@ -12,6 +12,9 @@ load_dotenv()
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID   = os.getenv("TELEGRAM_CHAT_ID", "")
 
+# ── API Keys ──────────────────────────────────────────────────────────────────
+RECAPTCHA_SITE_KEY = os.getenv("RECAPTCHA_SITE_KEY", "6LecJSYtAAAAAMSGKGKhA72oiCfAWr8EoAUzEMgj")
+
 # ── Proxy ─────────────────────────────────────────────────────────────────────
 PROXY_SERVER   = os.getenv("PROXY_SERVER", "")    # e.g. "http://host:port"
 PROXY_USERNAME = os.getenv("PROXY_USERNAME", "")

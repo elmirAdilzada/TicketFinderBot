@@ -17,7 +17,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from config.settings import BASE_URL, ENDPOINTS
+from config.settings import BASE_URL, ENDPOINTS, RECAPTCHA_SITE_KEY
 from models.trip import TripDate, Trip, WagonClass, RouteSnapshot
 
 log = logging.getLogger(__name__)
@@ -152,20 +152,9 @@ class ADYApiClient:
                     return resolve("");
                 }}
                 
-                let siteKey = '6LecJSYtAAAAAMSGKGKhA72oiCfAWr8EoAUzEMgj'; // default fallback
-                for (let script of document.scripts) {{
-                    if (script.src && script.src.includes('recaptcha/api.js?render=')) {{
-                        const match = script.src.match(/render=([^&]+)/);
-                        if (match) {{
-                            siteKey = match[1];
-                            break;
-                        }}
-                    }}
-                }}
-                
                 try {{
                     grecaptcha.ready(() => {{
-                        grecaptcha.execute(siteKey, {{action: 'submit'}})
+                        grecaptcha.execute('{RECAPTCHA_SITE_KEY}', {{action: 'submit'}})
                             .then(resolve)
                             .catch(() => resolve(""));
                     }});
@@ -252,8 +241,8 @@ class ADYApiClient:
         if raw is None:
             raise RuntimeError("get_trip_dates CDP fetch failed or timed out")
         if raw.get("error"):
-            log.debug("get_trip_dates returned error/no data: %s", raw)
-            return []
+            # Raise an error instead of returning [] so we don't accidentally clear the known dates cache
+            raise RuntimeError(f"API returned error: {raw.get('message', 'Unknown error')}")
 
         dates: list[TripDate] = []
         data_dict = raw.get("data", {})
