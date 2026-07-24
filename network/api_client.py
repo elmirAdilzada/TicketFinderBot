@@ -154,7 +154,7 @@ class ADYApiClient:
                 
                 try {{
                     grecaptcha.ready(() => {{
-                        grecaptcha.execute('6LfpFmsbAAAAAKigEk1t8PTNaLcUuNMAd5WSF_uq', {{action: 'submit'}})
+                        grecaptcha.execute('6LecJSYtAAAAAMSGKGKhA72oiCfAWr8EoAUzEMgj', {{action: 'submit'}})
                             .then(resolve)
                             .catch(() => resolve(""));
                     }});
