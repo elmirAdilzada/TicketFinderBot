@@ -76,10 +76,10 @@ def _poll_route_dates(client: ADYApiClient, route: dict) -> Optional[DateSnapsho
 
 # ── Tracked date checking ─────────────────────────────────────────────────────
 
-def _check_tracked_dates_for_route(client: ADYApiClient, route: dict, route_snapshot: DateSnapshot) -> None:
+def _check_tracked_dates(client: ADYApiClient, state: dict, routes: list) -> None:
     """
-    Check tracked dates for all users and notify on seat changes for a specific route.
-    Only fetches traintrip details for dates that are already in the snapshot
+    Check tracked dates for all users and notify on seat changes.
+    Only fetches traintrip details for dates that are already in the state
     (i.e., confirmed available by the regular poll cycle).
 
     Raises RecaptchaError or CloudflareChallenge so the main loop can
@@ -87,9 +87,6 @@ def _check_tracked_dates_for_route(client: ADYApiClient, route: dict, route_snap
     """
     from config.dynamic_settings import get_setting, set_setting
     from network.api_client import RecaptchaError, CloudflareChallenge
-
-    if route.get("notify_only_on_empty") or not route_snapshot:
-        return
 
     tracked = get_setting("TRACKED_DATES", {})
     if not tracked:
@@ -99,89 +96,96 @@ def _check_tracked_dates_for_route(client: ADYApiClient, route: dict, route_snap
     api_calls = 0
     MAX_API_CALLS = 15  # Safety limit per cycle
 
-    label = route["label"]
-    from_st = route["from_station"]
-    to_st = route["to_station"]
-    url_slug = route.get("url_slug")
-
     for chat_id, user_tracks in tracked.items():
         for track in user_tracks:
             date_from = track["date_from"]
             date_to = track["date_to"]
             last_seats = track.get("last_seats", {})
 
-            for date_val in sorted(route_snapshot.dates.keys()):
-                if not (date_from <= date_val <= date_to):
+            for route in routes:
+                if route.get("notify_only_on_empty"):
                     continue
 
-                if api_calls >= MAX_API_CALLS:
-                    log.info("Tracked dates: hit API call limit (%d), stopping.", MAX_API_CALLS)
-                    break
+                label = route["label"]
+                from_st = route["from_station"]
+                to_st = route["to_station"]
+                url_slug = route.get("url_slug")
 
-                try:
-                    trip = client.get_traintrip(from_st, to_st, date_val)
-                    api_calls += 1
-                except (RecaptchaError, CloudflareChallenge):
-                    # Bubble up – the main loop will handle this natively
-                    if updated:
-                        set_setting("TRACKED_DATES", tracked)
-                    raise
-                except Exception as exc:
-                    log.warning("Tracked date fetch failed %s %s: %s", label, date_val, exc)
+                route_state = state.get(label)
+                if not route_state:
                     continue
 
-                if not trip:
-                    # Date listed but no trip data
+                for date_val in sorted(route_state.dates.keys()):
+                    if not (date_from <= date_val <= date_to):
+                        continue
+
+                    if api_calls >= MAX_API_CALLS:
+                        log.info("Tracked dates: hit API call limit (%d), stopping.", MAX_API_CALLS)
+                        break
+
+                    try:
+                        trip = client.get_traintrip(from_st, to_st, date_val)
+                        api_calls += 1
+                    except (RecaptchaError, CloudflareChallenge):
+                        # Bubble up – the main loop will restart the browser
+                        if updated:
+                            set_setting("TRACKED_DATES", tracked)
+                        raise
+                    except Exception as exc:
+                        log.warning("Tracked date fetch failed %s %s: %s", label, date_val, exc)
+                        continue
+
+                    if not trip:
+                        # Date listed but no trip data
+                        if label not in last_seats:
+                            last_seats[label] = {}
+                        if last_seats[label].get(date_val) is not None:
+                            last_seats[label][date_val] = None
+                            updated = True
+                        continue
+
+                    # Build current seat info
+                    current_info = {
+                        "total": trip.total_free_seats,
+                        "classes": ", ".join(
+                            f"{wc.wagon_type}: {wc.total_free_seats}"
+                            for wc in trip.wagon_classes
+                        )
+                    }
+
                     if label not in last_seats:
                         last_seats[label] = {}
-                    if last_seats[label].get(date_val) is not None:
-                        last_seats[label][date_val] = None
+
+                    old_info = last_seats[label].get(date_val)
+
+                    if old_info is None or old_info.get("total") != current_info["total"]:
+                        # Seat count changed or first time seeing this date
+                        notify_tracked_date_update(
+                            chat_id=chat_id,
+                            label=label,
+                            trip=trip,
+                            old_seats=old_info,
+                            from_station=from_st,
+                            to_station=to_st,
+                            url_slug=url_slug,
+                        )
+                        last_seats[label][date_val] = current_info
                         updated = True
-                    continue
 
-                # Build current seat info
-                current_info = {
-                    "total": trip.total_free_seats,
-                    "classes": ", ".join(
-                        f"{wc.wagon_type}: {wc.total_free_seats}"
-                        for wc in trip.wagon_classes
-                    )
-                }
+                    time.sleep(2)  # Rate limiting between API calls
 
-                if label not in last_seats:
-                    last_seats[label] = {}
-
-                old_info = last_seats[label].get(date_val)
-
-                if old_info is None or old_info.get("total") != current_info["total"]:
-                    # Seat count changed or first time seeing this date
-                    notify_tracked_date_update(
-                        chat_id=chat_id,
-                        label=label,
-                        trip=trip,
-                        old_seats=old_info,
-                        from_station=from_st,
-                        to_station=to_st,
-                        url_slug=url_slug,
-                    )
-                    last_seats[label][date_val] = current_info
-                    updated = True
-
-                import time
-                time.sleep(2)  # Rate limiting between API calls
-
+                if api_calls >= MAX_API_CALLS:
+                    break
             if api_calls >= MAX_API_CALLS:
                 break
-            
+
             track["last_seats"] = last_seats
-        if api_calls >= MAX_API_CALLS:
-            break
 
     if updated:
         set_setting("TRACKED_DATES", tracked)
-        log.info("Tracked dates checked for %s and updated (%d API calls).", label, api_calls)
+        log.info("Tracked dates checked and updated (%d API calls).", api_calls)
     else:
-        log.debug("Tracked dates checked for %s, no changes (%d API calls).", label, api_calls)
+        log.debug("Tracked dates checked, no changes (%d API calls).", api_calls)
 
 
 # ── Cloudflare recovery ───────────────────────────────────────────────────────
@@ -318,15 +322,11 @@ def run_monitor() -> None:
             label = route["label"]
             try:
                 new_snapshot = _poll_route_dates(client, route)
-                if new_snapshot:
-                    _check_tracked_dates_for_route(client, route, new_snapshot)
             except CloudflareChallenge:
                 _handle_cloudflare_challenge(browser)
                 # Retry this route once
                 try:
                     new_snapshot = _poll_route_dates(client, route)
-                    if new_snapshot:
-                        _check_tracked_dates_for_route(client, route, new_snapshot)
                 except Exception as exc:
                     log.error("Route %s failed after CF recovery: %s", label, exc)
                     continue
@@ -393,6 +393,35 @@ def run_monitor() -> None:
 
         # Save state after every full cycle
         save_state(state)
+
+        # ── Check tracked dates ──────────────────────────────────────────────
+        try:
+            _check_tracked_dates(client, state, ROUTES)
+        except RecaptchaError:
+            from telegram.bot import notify_recaptcha_error
+            log.warning("Recaptcha error during tracked date check! Forcing browser restart.")
+            notify_recaptcha_error()
+            try:
+                browser.stop()
+                import time as _t; _t.sleep(2)
+                browser = BrowserManager()
+                browser.start()
+                client = ADYApiClient(browser)
+                listener.api_client = client
+                bot_status["browser_start_time"] = time.time()
+                bot_status["last_browser_restart_interval"] = get_setting("BROWSER_RESTART_INTERVAL", 3600)
+                bot_status["proxy_ok"] = True
+                log.info("Browser restarted after tracked-date Recaptcha error.")
+                time.sleep(5)
+                forced_poll_cycle = True
+            except Exception as exc:
+                log.error("Failed to restart browser after tracked-date Recaptcha error: %s", exc)
+                bot_status["proxy_ok"] = False
+        except CloudflareChallenge:
+            log.warning("Cloudflare challenge during tracked date check! Handling...")
+            _handle_cloudflare_challenge(browser)
+        except Exception as exc:
+            log.warning("Tracked date check failed: %s", exc)
 
         # ── Update last poll time ────────────────────────────────────────
         import datetime
