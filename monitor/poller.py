@@ -81,8 +81,12 @@ def _check_tracked_dates(client: ADYApiClient, state: dict, routes: list) -> Non
     Check tracked dates for all users and notify on seat changes.
     Only fetches traintrip details for dates that are already in the state
     (i.e., confirmed available by the regular poll cycle).
+
+    Raises RecaptchaError or CloudflareChallenge so the main loop can
+    handle a browser restart instead of silently skipping everything.
     """
     from config.dynamic_settings import get_setting, set_setting
+    from network.api_client import RecaptchaError, CloudflareChallenge
 
     tracked = get_setting("TRACKED_DATES", {})
     if not tracked:
@@ -122,6 +126,11 @@ def _check_tracked_dates(client: ADYApiClient, state: dict, routes: list) -> Non
                     try:
                         trip = client.get_traintrip(from_st, to_st, date_val)
                         api_calls += 1
+                    except (RecaptchaError, CloudflareChallenge):
+                        # Bubble up – the main loop will restart the browser
+                        if updated:
+                            set_setting("TRACKED_DATES", tracked)
+                        raise
                     except Exception as exc:
                         log.warning("Tracked date fetch failed %s %s: %s", label, date_val, exc)
                         continue
@@ -252,6 +261,7 @@ def run_monitor() -> None:
     MAX_CONSECUTIVE_FAILURES = 5
 
     bot_status["browser_start_time"] = time.time()
+    bot_status["last_browser_restart_interval"] = get_setting("BROWSER_RESTART_INTERVAL", 3600)
 
     while True:
         if force_poll_event.is_set():
@@ -268,12 +278,23 @@ def run_monitor() -> None:
         # Check if browser needs an hourly restart or if proxy was changed
         browser_restart_interval = get_setting("BROWSER_RESTART_INTERVAL", 3600)
         proxy_changed = bot_status.pop("proxy_changed", False)
-        
+
+        # If the restart interval was changed via settings, reset the timer so
+        # the new interval takes effect from now (not from the old start time).
+        last_interval = bot_status.get("last_browser_restart_interval", browser_restart_interval)
+        if last_interval != browser_restart_interval:
+            log.info(
+                "Browser restart interval changed (%ds → %ds). Resetting timer.",
+                last_interval, browser_restart_interval,
+            )
+            bot_status["browser_start_time"] = time.time()
+            bot_status["last_browser_restart_interval"] = browser_restart_interval
+
         if proxy_changed or (time.time() - bot_status.get("browser_start_time", time.time()) > browser_restart_interval):
             if proxy_changed:
                 log.info("Proxy change detected! Restarting browser immediately...")
             else:
-                log.info("Hourly browser restart triggered to prevent stale sessions.")
+                log.info("Scheduled browser restart triggered to prevent stale sessions.")
                 
             try:
                 browser.stop()
@@ -283,6 +304,7 @@ def run_monitor() -> None:
                 client = ADYApiClient(browser)
                 listener.api_client = client
                 bot_status["browser_start_time"] = time.time()
+                bot_status["last_browser_restart_interval"] = browser_restart_interval
                 bot_status["proxy_ok"] = True
                 log.info("Browser restart completed successfully.")
                 
@@ -320,8 +342,12 @@ def run_monitor() -> None:
                     client = ADYApiClient(browser)
                     listener.api_client = client
                     bot_status["browser_start_time"] = time.time()
+                    bot_status["last_browser_restart_interval"] = get_setting("BROWSER_RESTART_INTERVAL", 3600)
                     bot_status["proxy_ok"] = True
                     log.info("Browser restart completed successfully after Recaptcha error.")
+                    # Allow the new browser a moment to warm up, then poll immediately
+                    time.sleep(5)
+                    forced_poll_cycle = True
                 except Exception as exc:
                     log.error("Failed to restart browser after Recaptcha error: %s", exc)
                     bot_status["proxy_ok"] = False
@@ -371,23 +397,48 @@ def run_monitor() -> None:
         # ── Check tracked dates ──────────────────────────────────────────────
         try:
             _check_tracked_dates(client, state, ROUTES)
+        except RecaptchaError:
+            from telegram.bot import notify_recaptcha_error
+            log.warning("Recaptcha error during tracked date check! Forcing browser restart.")
+            notify_recaptcha_error()
+            try:
+                browser.stop()
+                import time as _t; _t.sleep(2)
+                browser = BrowserManager()
+                browser.start()
+                client = ADYApiClient(browser)
+                listener.api_client = client
+                bot_status["browser_start_time"] = time.time()
+                bot_status["last_browser_restart_interval"] = get_setting("BROWSER_RESTART_INTERVAL", 3600)
+                bot_status["proxy_ok"] = True
+                log.info("Browser restarted after tracked-date Recaptcha error.")
+                time.sleep(5)
+                forced_poll_cycle = True
+            except Exception as exc:
+                log.error("Failed to restart browser after tracked-date Recaptcha error: %s", exc)
+                bot_status["proxy_ok"] = False
+        except CloudflareChallenge:
+            log.warning("Cloudflare challenge during tracked date check! Handling...")
+            _handle_cloudflare_challenge(browser)
         except Exception as exc:
             log.warning("Tracked date check failed: %s", exc)
 
-        # ── Update last poll time and reset failure counter ────────────────
+        # ── Update last poll time ────────────────────────────────────────
         import datetime
         bot_status["last_poll_time"] = datetime.datetime.now()
-        consecutive_failures = 0
 
-        # ── Proxy / session health check ───────────────────────────────────
-        # If all routes failed consecutively, the proxy/session is dead.
-        # Notify via Telegram and attempt to restart the browser.
-        if all(
-            state.get(r["label"]) is None for r in ROUTES
-        ):
+        # ── Proxy / session health check (anomaly detection) ──────────────
+        # If ALL *primary* routes return None for N consecutive cycles the
+        # session is dead. Routes with notify_only_on_empty are auxiliary
+        # (e.g. Anomaly Check) and are excluded – their failure must not
+        # trigger a false-positive session restart.
+        primary_routes = [r for r in ROUTES if not r.get("notify_only_on_empty")]
+        if primary_routes and all(state.get(r["label"]) is None for r in primary_routes):
             consecutive_failures += 1
-            log.warning("All routes returned None (%d/%d). Possible session/proxy failure.",
-                         consecutive_failures, MAX_CONSECUTIVE_FAILURES)
+            log.warning(
+                "All primary routes returned None (%d/%d). Possible session/proxy failure.",
+                consecutive_failures, MAX_CONSECUTIVE_FAILURES,
+            )
             bot_status["proxy_ok"] = False
         else:
             consecutive_failures = 0
@@ -407,6 +458,8 @@ def run_monitor() -> None:
                 browser.start()
                 client = ADYApiClient(browser)
                 listener.api_client = client
+                bot_status["browser_start_time"] = time.time()
+                bot_status["last_browser_restart_interval"] = get_setting("BROWSER_RESTART_INTERVAL", 3600)
                 consecutive_failures = 0
                 bot_status["proxy_ok"] = True
                 notify_error("✅ Browser restarted successfully.")
