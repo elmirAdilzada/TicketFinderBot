@@ -716,8 +716,21 @@ class TelegramListener:
                                             to_station=route["to_station"],
                                             url_slug=route.get("url_slug"))
             except Exception as exc:
-                log.warning("Failed to fetch traintrip for %s on %s: %s", label, date_val, exc)
-                _send(f"⚠️ Failed to check <b>{label}</b> for {date_txt}: {exc}", chat_id=chat_id)
+                exc_str = str(exc).lower()
+                if "ecaptcha" in exc_str:
+                    from telegram.bot import _build_booking_url
+                    booking_url = _build_booking_url(route["from_station"], route["to_station"], date_val, route.get("url_slug"))
+                    msg = (
+                        f"⚠️ <b>{label}</b> üçün detallı yer məlumatı (traintrip) alına bilmədi.\n\n"
+                        f"<i>Səbəb:</i> ADY serveri botun təqdim etdiyi Recaptcha tokenini zəif hesab edərək rədd edir (422 xətası).\n\n"
+                        f"Zəhmət olmasa birbaşa saytdan yoxlayın:\n"
+                        f"<a href=\"{booking_url}\">🔗 {date_txt} üçün biletlərə bax</a>"
+                    )
+                    log.warning("Recaptcha rejected for %s on %s", label, date_val)
+                    _send(msg, chat_id=chat_id)
+                else:
+                    log.warning("Failed to fetch traintrip for %s on %s: %s", label, date_val, exc)
+                    _send(f"⚠️ Failed to check <b>{label}</b> for {date_txt}: {exc}", chat_id=chat_id)
 
             # Delay between routes to avoid ReCaptcha throttling
             time.sleep(3)
@@ -1099,7 +1112,7 @@ class TelegramListener:
 
 # ── Tracked Date Notification ───────────────────────────────────────────────────
 
-def notify_tracked_date_update(chat_id: str, label: str, trip: Trip, old_seats: dict,
+def notify_tracked_date_update(chat_id: str, label: str, trip, old_seats: dict,
                                 from_station: int, to_station: int,
                                 url_slug: str = None) -> Optional[int]:
     """Notify a specific user about seat changes for a tracked date."""

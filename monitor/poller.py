@@ -87,6 +87,8 @@ def _check_tracked_dates(client: ADYApiClient, state: dict, routes: list) -> Non
     """
     from config.dynamic_settings import get_setting, set_setting
     from network.api_client import RecaptchaError, CloudflareChallenge
+    from telegram.bot import notify_tracked_date_update
+    import time
 
     tracked = get_setting("TRACKED_DATES", {})
     if not tracked:
@@ -100,6 +102,11 @@ def _check_tracked_dates(client: ADYApiClient, state: dict, routes: list) -> Non
         for track in user_tracks:
             date_from = track["date_from"]
             date_to = track["date_to"]
+            # Clean up old notified_dates if they exist
+            if "notified_dates" in track:
+                del track["notified_dates"]
+                updated = True
+                
             last_seats = track.get("last_seats", {})
 
             for route in routes:
@@ -127,7 +134,6 @@ def _check_tracked_dates(client: ADYApiClient, state: dict, routes: list) -> Non
                         trip = client.get_traintrip(from_st, to_st, date_val)
                         api_calls += 1
                     except (RecaptchaError, CloudflareChallenge):
-                        # Bubble up – the main loop will restart the browser
                         if updated:
                             set_setting("TRACKED_DATES", tracked)
                         raise
@@ -136,7 +142,6 @@ def _check_tracked_dates(client: ADYApiClient, state: dict, routes: list) -> Non
                         continue
 
                     if not trip:
-                        # Date listed but no trip data
                         if label not in last_seats:
                             last_seats[label] = {}
                         if last_seats[label].get(date_val) is not None:
@@ -144,7 +149,6 @@ def _check_tracked_dates(client: ADYApiClient, state: dict, routes: list) -> Non
                             updated = True
                         continue
 
-                    # Build current seat info
                     current_info = {
                         "total": trip.total_free_seats,
                         "classes": ", ".join(
@@ -159,7 +163,6 @@ def _check_tracked_dates(client: ADYApiClient, state: dict, routes: list) -> Non
                     old_info = last_seats[label].get(date_val)
 
                     if old_info is None or old_info.get("total") != current_info["total"]:
-                        # Seat count changed or first time seeing this date
                         notify_tracked_date_update(
                             chat_id=chat_id,
                             label=label,

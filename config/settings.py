@@ -40,7 +40,7 @@ ROUTES = [
     {
         "label":       "Anomaly Check",
         "from_station": 232,
-        "to_station":   311,
+        "to_station":   295,
         "way":          1,
         "notify_only_on_empty": True,
     },
