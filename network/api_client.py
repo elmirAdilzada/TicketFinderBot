@@ -183,19 +183,11 @@ class ADYApiClient:
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-                const xsrf = decodeURIComponent(
-                    document.cookie
-                        .split("; ")
-                        .find(c => c.startsWith("XSRF-TOKEN="))
-                        ?.split("=")[1] || ""
-                );
-                
                 const r = await fetch('{url}', {{
                     method: 'POST',
                     headers: {{
                         'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-XSRF-TOKEN': xsrf
+                        'X-Requested-With': 'XMLHttpRequest'
                     }},
                     body: JSON.stringify(p),
                     signal: controller.signal
@@ -203,9 +195,8 @@ class ADYApiClient:
                 
                 clearTimeout(timeoutId);
 
-                const text = await r.text();
-                return JSON.stringify({{status: r.status, headers: Object.fromEntries(r.headers.entries()),
-    body: text}});
+                const j = await r.json();
+                return JSON.stringify({{status: r.status, data: j}});
 
             }} catch(e) {{
                 return JSON.stringify({{status: 500, error: e.toString()}});
@@ -217,7 +208,6 @@ class ADYApiClient:
             val = self._browser.evaluate(js_code, timeout=30.0)
             if val:
                 parsed = json.loads(val)
-                log.info("Playwright response: %s", parsed)
                 if parsed.get("status") in (403, 503):
                     raise CloudflareChallenge(f"Cloudflare challenge detected (HTTP {parsed.get('status')})")
                 
