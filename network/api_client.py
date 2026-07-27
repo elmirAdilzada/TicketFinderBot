@@ -194,7 +194,7 @@ class ADYApiClient:
                     method: 'POST',
                     headers: {{
                         'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
+                        'X-Requested-With': 'XMLHttpRequest',
                         'X-XSRF-TOKEN': xsrf
                     }},
                     body: JSON.stringify(p),
