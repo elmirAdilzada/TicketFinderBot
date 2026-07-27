@@ -203,8 +203,9 @@ class ADYApiClient:
                 
                 clearTimeout(timeoutId);
 
-                const j = await r.json();
-                return JSON.stringify({{status: r.status, data: j}});
+                const text = await r.text();
+                return JSON.stringify({{status: r.status, headers: Object.fromEntries(r.headers.entries()),
+    body: text}});
 
             }} catch(e) {{
                 return JSON.stringify({{status: 500, error: e.toString()}});
@@ -216,6 +217,7 @@ class ADYApiClient:
             val = self._browser.evaluate(js_code, timeout=30.0)
             if val:
                 parsed = json.loads(val)
+                log.info("Playwright response: %s", parsed)
                 if parsed.get("status") in (403, 503):
                     raise CloudflareChallenge(f"Cloudflare challenge detected (HTTP {parsed.get('status')})")
                 
