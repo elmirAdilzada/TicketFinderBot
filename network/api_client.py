@@ -183,11 +183,19 @@ class ADYApiClient:
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 15000);
 
+                const xsrf = decodeURIComponent(
+                    document.cookie
+                        .split("; ")
+                        .find(c => c.startsWith("XSRF-TOKEN="))
+                        ?.split("=")[1] || ""
+                );
+                
                 const r = await fetch('{url}', {{
                     method: 'POST',
                     headers: {{
                         'Content-Type': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest'
+                        'X-XSRF-TOKEN': xsrf
                     }},
                     body: JSON.stringify(p),
                     signal: controller.signal
